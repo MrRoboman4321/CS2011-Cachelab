@@ -80,6 +80,20 @@ int main(int argc, char *argv[])
 }
 
 int calc_tbits(char *trace) {
+    char *string;
+    unsigned long long int hexAddress;  //64-bit addresses
+    int decBytes;
+    unsigned long long int currentMax = 0;
+    unsigned long long int currentMin = ~0;
+    FILE *filepointer;
+    filepointer = fopen(trace, "r");
+    while(fscanf(filepointer, " %s %x,%d", string, hexAddress, decBytes) != -1) {
+        if (hexAddress > currentMax) {
+            currentMax = hexAddress;
+        } else if (hexAddress < currentMin) {
+            currentMin = hexAddress;
+        }
+    }
     return 0;
 }
 
