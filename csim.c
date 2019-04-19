@@ -17,19 +17,20 @@ typedef struct cache_performance {
     int evictions;
 } cache_performance;
 
-typedef struct cache {
-    set *sets[];
-} cache;
+typedef struct line {
+    bool valid;
+    unsigned long long tag; //ensure 64-bit address compatibility
+} line;
+
 
 typedef struct set {
     int id;
     line *lines;
 } set;
 
-typedef struct line {
-    bool valid;
-    unsigned long long tag; //ensure 64-bit address compatibility
-} line;
+typedef struct cache {
+    set *sets;
+} cache;
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
                 break;
             case 's':
                 printf("parsing s...");
-                sets = strtol(optarg, &p, 10);
+                s = strtol(optarg, &p, 10);
                 break;
             case 'E':
                 lines_per_set = strtol(optarg, &p, 10);
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
+    if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
         print_usage();
         exit(0);
     }
@@ -78,23 +79,26 @@ int main(int argc, char *argv[])
     if(DEBUG) {
         printf("Help set: %s\n", help_flag ? "true" : "false");
         printf("Verbose flag set: %s\n", verbose_flag ? "true" : "false");
-        printf("s: %d\n", sets);
+        printf("s: %d\n", s);
         printf("Lines per set: %d\n", lines_per_set);
         printf("Bytes per line: %d\n", bytes_per_line);
         printf("Trace file: %s\n", trace_file);
     }
 
     cache *simulated_cache = (cache *) malloc(sizeof(cache));
-    simulated_cache->sets  = (set **)  malloc(sizeof(set) * pow(2, s));
+    simulated_cache->sets  = (set *)   malloc(sizeof(set) * pow(2, s));
 
     for(int i = 0; i < pow(2, s); i++) {
-        simulated_cache->sets[i] = (line *) malloc(sizeof(line) * lines_per_set);
+        simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
+
+    printf("Size allocated for cache: %lu\n", sizeof(simulated_cache));
 
     printSummary(0, 0, 0);
     return 0;
 }
 
+/*
 int calc_tbits(char *trace) {
     char *string;
     unsigned long long int hexAddress;  //64-bit addresses
@@ -111,7 +115,7 @@ int calc_tbits(char *trace) {
         }
     }
     return 0;
-}
+}*/
 
 void print_usage() {
     printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
