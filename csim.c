@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <getopt.h>
 
 #define DEBUG 1
 
@@ -12,11 +13,11 @@ typedef struct cache_performance {
     int hits;
     int misses;
     int evictions;
-};
+} cache_performance;
 
 int main(int argc, char *argv[])
 {
-    struct cache_performance *data;
+    printf("What is happening");
 
     bool help_flag = false;
     bool verbose_flag = false;
@@ -26,8 +27,11 @@ int main(int argc, char *argv[])
     char *trace_file = (char *) NULL;
 
     int opt;
+    char *p;
 
-    while((opt = getopt(argc, argv, ":hvsEbt")) != -1) {
+    printf("Before loop");
+
+    while((opt = getopt(argc, argv, "hvs:E:b:t:")) != -1) {
         switch(opt) {
             case 'h':
                 help_flag = true;
@@ -36,32 +40,38 @@ int main(int argc, char *argv[])
                 verbose_flag = true;
                 break;
             case 's':
-                sets = strtol(optarg, (char **) NULL, 10);
+                printf("parsing s...");
+                sets = strtol(optarg, &p, 10);
                 break;
             case 'E':
-                lines_per_set = strtol(optarg, (char **) NULL, 10);
+                lines_per_set = strtol(optarg, &p, 10);
                 break;
             case 'b':
-                bytes_per_line = strtol(optarg, (char **) NULL, 10);
+                bytes_per_line = strtol(optarg, &p, 10);
                 break;
             case 't':
                 trace_file = optarg;
                 break;
+            default:
+                printf("other arg passed\n");
+                break;
         }
     }
 
-    if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
+    printf("After arg parsing\n");
+
+    /*if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
         print_usage();
         exit(0);
-    }
+    }*/
 
     if(DEBUG) {
         printf("Help set: %s\n", help_flag ? "true" : "false");
         printf("Verbose flag set: %s\n", verbose_flag ? "true" : "false");
-        printf("Sets: %d", sets);
-        printf("Lines per set: %d", lines_per_set);
-        printf("Bytes per line: %d", bytes_per_line);
-        printf("Trace file: %s", trace_file);
+        printf("Sets: %d\n", sets);
+        printf("Lines per set: %d\n", lines_per_set);
+        printf("Bytes per line: %d\n", bytes_per_line);
+        printf("Trace file: %s\n", trace_file);
     }
 
     printSummary(0, 0, 0);
@@ -69,5 +79,5 @@ int main(int argc, char *argv[])
 }
 
 void print_usage() {
-    printf("Usage: ./csmin [-hv] -s <s> -E <E> -b <b> -t <tracefile>");
+    printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
 }
