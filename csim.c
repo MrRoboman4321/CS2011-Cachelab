@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
+#include <math.h>
 
 #define DEBUG 1
 
@@ -16,21 +17,31 @@ typedef struct cache_performance {
     int evictions;
 } cache_performance;
 
+typedef struct cache {
+    set *sets[];
+} cache;
+
+typedef struct set {
+    int id;
+    line *lines;
+} set;
+
+typedef struct line {
+    bool valid;
+    unsigned long long tag; //ensure 64-bit address compatibility
+} line;
+
 int main(int argc, char *argv[])
 {
-    printf("What is happening");
-
     bool help_flag = false;
     bool verbose_flag = false;
-    int sets = -1;
+    int s = -1;
     int lines_per_set = -1;
     int bytes_per_line = -1;
     char *trace_file = (char *) NULL;
 
     int opt;
     char *p;
-
-    printf("Before loop");
 
     while((opt = getopt(argc, argv, "hvs:E:b:t:")) != -1) {
         switch(opt) {
@@ -59,20 +70,25 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("After arg parsing\n");
-
-    /*if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
+    if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
         print_usage();
         exit(0);
-    }*/
+    }
 
     if(DEBUG) {
         printf("Help set: %s\n", help_flag ? "true" : "false");
         printf("Verbose flag set: %s\n", verbose_flag ? "true" : "false");
-        printf("Sets: %d\n", sets);
+        printf("s: %d\n", sets);
         printf("Lines per set: %d\n", lines_per_set);
         printf("Bytes per line: %d\n", bytes_per_line);
         printf("Trace file: %s\n", trace_file);
+    }
+
+    cache *simulated_cache = (cache *) malloc(sizeof(cache));
+    simulated_cache->sets  = (set **)  malloc(sizeof(set) * pow(2, s));
+
+    for(int i = 0; i < pow(2, s); i++) {
+        simulated_cache->sets[i] = (line *) malloc(sizeof(line) * lines_per_set);
     }
 
     printSummary(0, 0, 0);
