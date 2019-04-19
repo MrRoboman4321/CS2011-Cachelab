@@ -32,6 +32,12 @@ typedef struct cache {
     set *sets;
 } cache;
 
+typedef struct lru_node {
+    struct lru_node *prev;
+    struct lru_node *next;
+    int idx; //Index into the array of lines in the set
+} lru_node;
+
 int main(int argc, char *argv[])
 {
     bool help_flag = false;
@@ -85,14 +91,26 @@ int main(int argc, char *argv[])
         printf("Trace file: %s\n", trace_file);
     }
 
+    lru_node *lru_tracker[(int) pow(2, s)];
+
+    for(int i = 0; i < pow(2, s); i++) {
+        lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
+        cur_node->idx = 0;
+        lru_tracker[i] = cur_node;
+
+        for(int j = 0; j < lines_per_set - 1; j++) {
+            lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
+            next_node->idx = j + 1;
+            cur_node->next = next_node;
+        }
+    }
+
     cache *simulated_cache = (cache *) malloc(sizeof(cache));
     simulated_cache->sets  = (set *)   malloc(sizeof(set) * pow(2, s));
 
     for(int i = 0; i < pow(2, s); i++) {
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
-
-    printf("Size allocated for cache: %lu\n", sizeof(simulated_cache));
 
     printSummary(0, 0, 0);
     return 0;
