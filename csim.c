@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(sets == 1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
+    if(sets == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
         print_usage();
         exit(0);
     }
