@@ -112,6 +112,8 @@ int main(int argc, char *argv[])
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
 
+    printf("Using LRU tracker: %d\n", lru_tracker[0]->idx);
+
     printSummary(0, 0, 0);
     return 0;
 }
