@@ -8,6 +8,7 @@
 #define DEBUG 1
 
 void print_usage();
+int calc_tbits();
 
 typedef struct cache_performance {
     int hits;
@@ -75,6 +76,10 @@ int main(int argc, char *argv[])
     }
 
     printSummary(0, 0, 0);
+    return 0;
+}
+
+int calc_tbits(char *trace) {
     return 0;
 }
 
