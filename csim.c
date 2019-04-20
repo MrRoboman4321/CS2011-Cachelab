@@ -8,8 +8,14 @@
 
 #define DEBUG 1
 
+typedef struct location {
+    int set_id;
+    int tag_id;
+} location;
+
 void print_usage();
 int calc_tbits();
+void get_and_set_tag(struct location *loc, unsigned int address, int tbits, int sbits);
 
 typedef struct cache_performance {
     int hits;
@@ -95,7 +101,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    if(DEBUG) {
+    if(DEBUG || verbose_flag) {
         printf("Help set: %s\n", help_flag ? "true" : "false");
         printf("Verbose flag set: %s\n", verbose_flag ? "true" : "false");
         printf("s: %d\n", s);
@@ -134,6 +140,12 @@ int main(int argc, char *argv[])
     //TODO: remove, just to ignore "unused variable lru_tracker" on compilation
     printf("Use LRU tracker: %d", lru_tracker[0]->idx);
 
+    location *loc = malloc(sizeof(location));
+    loc->set_id = 0;
+    loc->tag_id = 0;
+
+    get_and_set_tag(loc, 0, 1, 1);
+
     printSummary(0, 0, 0);
     return 0;
 }
@@ -161,6 +173,9 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
     }
 
     return cp;
+}
+
+void get_set_and_tag(location *loc, unsigned int address, int tbits, int sbits) {
 }
 
 /*
