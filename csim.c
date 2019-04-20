@@ -42,6 +42,9 @@ typedef struct set {
 typedef struct cache {
     set *sets;
     int lines_per_set;
+    int bytes_per_line;
+    int sbits;
+    int tbits;
 } cache;
 
 typedef struct lru_node {
@@ -77,13 +80,15 @@ int main(int argc, char *argv[])
             case 's':
                 printf("parsing s...");
                 s = strtol(optarg, &p, 10);
+                cache->sbits = s;
                 break;
             case 'E':
                 lines_per_set = strtol(optarg, &p, 10);
-                cache.lines_per_set = lines_per_set;
+                cache->lines_per_set = lines_per_set;
                 break;
             case 'b':
                 bytes_per_line = strtol(optarg, &p, 10);
+                cache->bytes_per_line = bytes_per_line;
                 break;
             case 't':
                 trace_path = optarg;
@@ -93,6 +98,7 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+    cache->tbits = 64 - (s + bytes_per_line);
 
     if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_path == (char *) NULL) {
         print_usage();
@@ -159,12 +165,22 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
     char *type = (char *) calloc(sizeof(char), 1);
     unsigned int *address = (unsigned int *) calloc(sizeof(unsigned int), 1);
     int *size = (int *) calloc(sizeof(int), 1);
-
+    location *loc = malloc(sizeof(location));
+    loc->set_id = 0;
+    loc->tag_id = 0;
     //Loop through each line in the trace file
     while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
+        get_and_set_tag(loc, address, cache->tbits, cache->sbits);
         switch(*type) {
             case 'L':
                 printf("Load, %x, %d\n", *address, *size);
+                int result = cache_scan(loc, *sim_cache);
+                if(result == 0) {
+                    cache_performance->hits++;
+                } else if(result == 1 || result == 2) {
+                    cache_performance->miss++;
+                    if (result == 2) { cache_performance->evictions++;};
+                }
                 break;
             case 'S':
                 printf("Store, %x, %d\n", *address, *size);
