@@ -10,8 +10,11 @@
 
 typedef struct location {
     int set_id;
-    int tag_id;
+    unsigned long long tag_id;
 } location;
+
+//
+enum HitOrMiss {HIT, COLD_MISS, MISS};    //I bet they never miss yuhh
 
 void print_usage();
 int calc_tbits();
@@ -38,6 +41,7 @@ typedef struct set {
 
 typedef struct cache {
     set *sets;
+    int lines_per_set;
 } cache;
 
 typedef struct lru_node {
@@ -76,6 +80,7 @@ int main(int argc, char *argv[])
                 break;
             case 'E':
                 lines_per_set = strtol(optarg, &p, 10);
+                cache.lines_per_set = lines_per_set;
                 break;
             case 'b':
                 bytes_per_line = strtol(optarg, &p, 10);
@@ -196,6 +201,29 @@ int calc_tbits(char *trace) {
     }
     return 0;
 }*/
+
+enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
+    int set_id = loc->set_id;
+    unsigned long long tag_id = loc->tag_id;
+    line *lines = sim_cache->sets[set_id]->lines;
+    printf(lines);                          //To make sure I know what the fuck is going on (I don't)//
+    bool empty_cache = false;
+    for (var i = 0; i < sim_cache->lines_per_set; i++){
+        if(lines[i] == tag_id) {
+            return HIT;
+        }
+        if(!lines[i]->valid) {
+            empty_cache = true;
+        }
+    }
+    if(empty_cache) {
+        return COLD_MISS;
+    } else {
+        return MISS;
+    }
+
+
+}
 
 void print_usage() {
     printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
