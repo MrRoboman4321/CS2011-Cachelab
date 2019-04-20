@@ -45,7 +45,9 @@ int main(int argc, char *argv[])
     int s = -1;
     int lines_per_set = -1;
     int bytes_per_line = -1;
-    char *trace_file = (char *) NULL;
+    char *trace_path = (char *) NULL;
+
+    FILE *trace_file;
 
     int opt;
     char *p;
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
                 bytes_per_line = strtol(optarg, &p, 10);
                 break;
             case 't':
-                trace_file = optarg;
+                trace_path = optarg;
                 break;
             default:
                 printf("other arg passed\n");
@@ -77,8 +79,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_file == (char *) NULL) {
+    if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_path == (char *) NULL) {
         print_usage();
+        exit(0);
+    }
+
+    if((trace_file = fopen(trace_path, 'r')) == -1) {
+        prinf("Invalid trace file path \"%s\".");
         exit(0);
     }
 
@@ -112,10 +119,32 @@ int main(int argc, char *argv[])
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
 
-    printf("Using LRU tracker: %d\n", lru_tracker[0]->idx);
-
     printSummary(0, 0, 0);
     return 0;
+}
+
+cache_performance *simulate_cache(cache_performance *cp, cache *sim__cache, char FILE *trace_file) {
+    char type;
+    unsigned long long address;
+    int size;
+
+    while(fscanf(trace_file, " %c %x,%d", type, address, size) != -1) {
+        switch(type) {
+            case 'L':
+                printf("Load, %x, %d", address, size);
+                break;
+            case 'S':
+                printf("Store, %x, %d", address, size);
+                break;
+            case 'I':
+                printf("Instruction (pass)");
+                break;
+            default:
+                break;
+        }
+    }
+
+    return cp;
 }
 
 /*
