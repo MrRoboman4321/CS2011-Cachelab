@@ -17,6 +17,8 @@ typedef struct cache_performance {
     int evictions;
 } cache_performance;
 
+cache_performance *simulate_cache();
+
 typedef struct line {
     bool valid;
     unsigned long long tag; //ensure 64-bit address compatibility
@@ -48,6 +50,8 @@ int main(int argc, char *argv[])
     char *trace_path = (char *) NULL;
 
     FILE *trace_file;
+
+    cache_performance *cp = (cache_performance *) malloc(sizeof(cache_performance));
 
     int opt;
     char *p;
@@ -84,8 +88,10 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    if((trace_file = fopen(trace_path, 'r')) == -1) {
-        prinf("Invalid trace file path \"%s\".");
+    trace_file = fopen(trace_path, "r");
+
+    if(trace_file == NULL) {
+        printf("Invalid trace file path \"%s\".", trace_path);
         exit(0);
     }
 
@@ -95,7 +101,7 @@ int main(int argc, char *argv[])
         printf("s: %d\n", s);
         printf("Lines per set: %d\n", lines_per_set);
         printf("Bytes per line: %d\n", bytes_per_line);
-        printf("Trace file: %s\n", trace_file);
+        printf("Trace file: %s\n", trace_path);
     }
 
     lru_node *lru_tracker[(int) pow(2, s)];
@@ -119,25 +125,29 @@ int main(int argc, char *argv[])
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
 
+    simulate_cache(cp, simulated_cache, trace_file);
+
+    printf("Use LRU tracker: %d", lru_tracker[0]->idx);
+
     printSummary(0, 0, 0);
     return 0;
 }
 
-cache_performance *simulate_cache(cache_performance *cp, cache *sim__cache, char FILE *trace_file) {
-    char type;
-    unsigned long long address;
-    int size;
+cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
+    char *type = (char *) calloc(sizeof(char), 1);
+    unsigned int *address = (unsigned int *) calloc(sizeof(unsigned int), 1);
+    int *size = (int *) calloc(sizeof(int), 1);
 
-    while(fscanf(trace_file, " %c %x,%d", type, address, size) != -1) {
-        switch(type) {
+    while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
+        switch(*type) {
             case 'L':
-                printf("Load, %x, %d", address, size);
+                printf("Load, %x, %d\n", *address, *size);
                 break;
             case 'S':
-                printf("Store, %x, %d", address, size);
+                printf("Store, %x, %d\n", *address, *size);
                 break;
             case 'I':
-                printf("Instruction (pass)");
+                printf("Instruction (pass)\n");
                 break;
             default:
                 break;
