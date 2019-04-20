@@ -164,6 +164,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void get_set_and_tag(location *loc, unsigned int address, int tbits, int sbits) {
+    unsigned long long tag_mask = ~(~0 << (64 - tbits));
+    unsigned long long set_mask = ~(~0 << (64 - sbits));
+
+    loc->tag_id = (tag_mask & address) >> (64 - tbits);
+    loc->set_id = (set_mask & address) >> (64 - sbits);
+}
+
 cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
     char *type = (char *) calloc(sizeof(char), 1);
     unsigned int *address = (unsigned int *) calloc(sizeof(unsigned int), 1);
@@ -201,14 +209,6 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
     }
 
     return cp;
-}
-
-void get_set_and_tag(location *loc, unsigned int address, int tbits, int sbits) {
-    unsigned long long tag_mask = ~(~0 << (64 - tbits));
-    unsigned long long set_mask = ~(~0 << (64 - sbits));
-
-    loc->tag_id = (tag_mask & address) >> (64 - tbits);
-    loc->set_id = (set_mask & address) >> (64 - sbits);
 }
 
 /*
