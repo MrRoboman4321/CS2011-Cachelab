@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
 
     lru_node *lru_tracker[(int) pow(2, s)];
 
+    //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
         lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
         cur_node->idx = 0;
@@ -118,15 +119,19 @@ int main(int argc, char *argv[])
         }
     }
 
+    //Allocate memory to store the cache and sets
     cache *simulated_cache = (cache *) malloc(sizeof(cache));
     simulated_cache->sets  = (set *)   malloc(sizeof(set) * pow(2, s));
 
+    //For each set, allocate memory for the lines within
     for(int i = 0; i < pow(2, s); i++) {
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
 
+    //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
 
+    //TODO: remove, just to ignore "unused variable lru_tracker" on compilation
     printf("Use LRU tracker: %d", lru_tracker[0]->idx);
 
     printSummary(0, 0, 0);
@@ -138,6 +143,7 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
     unsigned int *address = (unsigned int *) calloc(sizeof(unsigned int), 1);
     int *size = (int *) calloc(sizeof(int), 1);
 
+    //Loop through each line in the trace file
     while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
         switch(*type) {
             case 'L':
