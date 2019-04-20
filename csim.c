@@ -18,7 +18,7 @@ enum HitOrMiss {HIT, COLD_MISS, MISS};    //I bet they never miss yuhh
 
 void print_usage();
 int calc_tbits();
-void get_and_set_tag(struct location *loc, unsigned int address, int tbits, int sbits);
+void get_and_set_tag(location *loc, unsigned int address, int tbits, int sbits);
 
 typedef struct cache_performance {
     int hits;
@@ -183,7 +183,7 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
 
     //Loop through each line in the trace file
     while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
-        get_and_set_tag(loc, *address, sim_cache->tbits, sim_cache->sbits);
+        get_set_and_tag(loc, *address, sim_cache->tbits, sim_cache->sbits);
         switch(*type) {
             case 'L':
                 printf("Load, %x, %d\n", *address, *size);
@@ -234,7 +234,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     int set_id = loc->set_id;
     unsigned long long tag_id = loc->tag_id;
     line *lines = sim_cache->sets[set_id].lines;
-    printf("Lines address: %p", lines);                          //To make sure I know what the fuck is going on (I don't)
+    printf("Lines address: %p\n", lines);                          //To make sure I know what the fuck is going on (I don't)
     bool empty_cache = false;
     for (int i = 0; i < sim_cache->lines_per_set; i++){
         if(lines[i].tag == tag_id) {
