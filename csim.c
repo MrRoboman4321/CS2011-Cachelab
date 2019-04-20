@@ -197,6 +197,11 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
 }
 
 void get_set_and_tag(location *loc, unsigned int address, int tbits, int sbits) {
+    unsigned long long tag_mask = ~(~0 << (64 - tbits));
+    unsigned long long set_mask = ~(~0 << (64 - sbits));
+
+    loc->tag_id = (tag_mask & address) >> (64 - tbits);
+    loc->set_id = (set_mask & address) >> (64 - sbits);
 }
 
 /*
