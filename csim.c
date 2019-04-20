@@ -80,15 +80,12 @@ int main(int argc, char *argv[])
             case 's':
                 printf("parsing s...");
                 s = strtol(optarg, &p, 10);
-                cache->sbits = s;
                 break;
             case 'E':
                 lines_per_set = strtol(optarg, &p, 10);
-                cache->lines_per_set = lines_per_set;
                 break;
             case 'b':
                 bytes_per_line = strtol(optarg, &p, 10);
-                cache->bytes_per_line = bytes_per_line;
                 break;
             case 't':
                 trace_path = optarg;
@@ -98,7 +95,6 @@ int main(int argc, char *argv[])
                 break;
         }
     }
-    cache->tbits = 64 - (s + bytes_per_line);
 
     if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_path == (char *) NULL) {
         print_usage();
@@ -144,6 +140,11 @@ int main(int argc, char *argv[])
     for(int i = 0; i < pow(2, s); i++) {
         simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
     }
+
+    simulated_cache->sbits = s;
+    simulated_cache->lines_per_set = lines_per_set;
+    simulated_cache->bytes_per_line = bytes_per_line;
+    simulated_cache->tbits = 64 - (s + bytes_per_line);
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
