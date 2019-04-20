@@ -18,7 +18,7 @@ enum HitOrMiss {HIT, COLD_MISS, MISS};    //I bet they never miss yuhh
 
 void print_usage();
 int calc_tbits();
-void get_and_set_tag(location *loc, unsigned int address, int tbits, int sbits);
+void get_set_and_tag(location *loc, unsigned long long address, int tbits, int sbits);
 
 typedef struct cache_performance {
     int hits;
@@ -57,6 +57,13 @@ typedef struct lru_node {
 
 int main(int argc, char *argv[])
 {
+    location *l = malloc(sizeof(location));
+    unsigned long long address = 18378908604322283520ULL;
+    get_set_and_tag(l, address, 8, 8);
+
+    printf("set index: %d\n", l->set_id);
+    printf("tag: %llu\n", l->tag_id);
+
     bool help_flag = false;
     bool verbose_flag = false;
     int s = -1;
@@ -164,12 +171,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void get_set_and_tag(location *loc, unsigned int address, int tbits, int sbits) {
-    unsigned long long tag_mask = ~(~0 << (64 - tbits));
-    unsigned long long set_mask = ~(~0 << (64 - sbits));
+void get_set_and_tag(location *loc, unsigned long long address, int tbits, int sbits) {
+    unsigned long long tag_mask = ~0 << (64 - tbits);
+    unsigned long long set_mask = ~0 << (56 - sbits);
+    set_mask >>= 8;
 
     loc->tag_id = (tag_mask & address) >> (64 - tbits);
-    loc->set_id = (set_mask & address) >> (64 - sbits);
+    loc->set_id = (set_mask & address) >> (56 - sbits);
 }
 
 cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
