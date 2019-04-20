@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     loc->set_id = 0;
     loc->tag_id = 0;
 
-    get_and_set_tag(loc, 0, 1, 1);
+    //get_and_set_tag(loc, 0, 1, 1);
 
     printSummary(0, 0, 0);
     return 0;
