@@ -165,12 +165,14 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
     char *type = (char *) calloc(sizeof(char), 1);
     unsigned int *address = (unsigned int *) calloc(sizeof(unsigned int), 1);
     int *size = (int *) calloc(sizeof(int), 1);
+
     location *loc = malloc(sizeof(location));
     loc->set_id = 0;
     loc->tag_id = 0;
+
     //Loop through each line in the trace file
     while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
-        get_and_set_tag(loc, address, cache->tbits, cache->sbits);
+        get_and_set_tag(loc, *address, sim_cache->tbits, sim_cache->sbits);
         switch(*type) {
             case 'L':
                 printf("Load, %x, %d\n", *address, *size);
@@ -227,13 +229,13 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     int set_id = loc->set_id;
     unsigned long long tag_id = loc->tag_id;
     line *lines = sim_cache->sets[set_id]->lines;
-    printf(lines);                          //To make sure I know what the fuck is going on (I don't)//
+    printf("Lines address: %p", lines);                          //To make sure I know what the fuck is going on (I don't)
     bool empty_cache = false;
-    for (var i = 0; i < sim_cache->lines_per_set; i++){
-        if(lines[i] == tag_id) {
+    for (int i = 0; i < sim_cache->lines_per_set; i++){
+        if(lines[i].tag == tag_id) {
             return HIT;
         }
-        if(!lines[i]->valid) {
+        if(!lines[i].valid) {
             empty_cache = true;
         }
     }
