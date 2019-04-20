@@ -47,6 +47,8 @@ typedef struct cache {
     int tbits;
 } cache;
 
+enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
+
 typedef struct lru_node {
     struct lru_node *prev;
     struct lru_node *next;
@@ -177,12 +179,14 @@ cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE 
         switch(*type) {
             case 'L':
                 printf("Load, %x, %d\n", *address, *size);
-                int result = cache_scan(loc, *sim_cache);
+                int result = cache_scan(loc, sim_cache);
                 if(result == 0) {
-                    cache_performance->hits++;
+                    cp->hits++;
                 } else if(result == 1 || result == 2) {
-                    cache_performance->miss++;
-                    if (result == 2) { cache_performance->evictions++;};
+                    cp->misses++;
+                    if (result == 2) {
+                        cp->evictions++;
+                    };
                 }
                 break;
             case 'S':
@@ -229,7 +233,7 @@ int calc_tbits(char *trace) {
 enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     int set_id = loc->set_id;
     unsigned long long tag_id = loc->tag_id;
-    line *lines = sim_cache->sets[set_id]->lines;
+    line *lines = sim_cache->sets[set_id].lines;
     printf("Lines address: %p", lines);                          //To make sure I know what the fuck is going on (I don't)
     bool empty_cache = false;
     for (int i = 0; i < sim_cache->lines_per_set; i++){
