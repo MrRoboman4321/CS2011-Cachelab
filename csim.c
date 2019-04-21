@@ -173,11 +173,11 @@ int main(int argc, char *argv[])
 
 void get_set_and_tag(location *loc, unsigned long long address, int tbits, int sbits) {
     unsigned long long tag_mask = ~0 << (64 - tbits);
-    unsigned long long set_mask = ~0 << (56 - sbits);
-    set_mask >>= 8;
+    unsigned long long set_mask = ~0 << (64 - sbits);
+    set_mask >>= tbits;
 
     loc->tag_id = (tag_mask & address) >> (64 - tbits);
-    loc->set_id = (set_mask & address) >> (56 - sbits);
+    loc->set_id = (set_mask & address) >> ((64 - tbits) - sbits);
 }
 
 cache_performance *simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
