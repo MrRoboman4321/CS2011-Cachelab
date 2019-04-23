@@ -45,6 +45,7 @@ typedef struct cache {
     int bytes_per_line;
     int sbits;
     int tbits;
+    lru_node *lru_tracker[];
 } cache;
 
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
@@ -126,21 +127,6 @@ int main(int argc, char *argv[])
         printf("Trace file: %s\n", trace_path);
     }
 
-    lru_node *lru_tracker[(int) pow(2, s)];
-
-    //Set up linked lists with length E for each set
-    for(int i = 0; i < pow(2, s); i++) {
-        lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
-        cur_node->idx = 0;
-        lru_tracker[i] = cur_node;
-
-        for(int j = 0; j < lines_per_set - 1; j++) {
-            lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
-            next_node->idx = j + 1;
-            cur_node->next = next_node;
-        }
-    }
-
     //Allocate memory to store the cache and sets
     cache *simulated_cache = (cache *) malloc(sizeof(cache));
     simulated_cache->sets  = (set *)   malloc(sizeof(set) * pow(2, s));
@@ -154,6 +140,21 @@ int main(int argc, char *argv[])
     simulated_cache->lines_per_set = lines_per_set;
     simulated_cache->bytes_per_line = bytes_per_line;
     simulated_cache->tbits = 64 - (s + bytes_per_line);
+
+    simulated_cache->lru_tracker[(int) pow(2, s)];
+
+    //Set up linked lists with length E for each set
+    for(int i = 0; i < pow(2, s); i++) {
+        simulated_cache->lru_tracker *cur_node = (simulated_cache->lru_tracker *) malloc(sizeof(simulated_cache->lru_tracker));
+        cur_node->idx = 0;
+        simulated_cache->lru_tracker[i] = cur_node;
+
+        for(int j = 0; j < lines_per_set - 1; j++) {
+            simulated_cache->lru_tracker *next_node = (simulated_cache->lru_tracker *) malloc(sizeof(simulated_cache->lru_tracker));
+            next_node->idx = j + 1;
+            cur_node->next = next_node;
+        }
+    }
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
@@ -246,6 +247,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     bool empty_cache = false;
     for (int i = 0; i < sim_cache->lines_per_set; i++){
         if(lines[i].tag == tag_id) {
+            LRU_manipulate(sim_cache, set_id, tag_id, i, 0);
             return HIT;
         }
         if(!lines[i].valid) {
@@ -253,12 +255,37 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
         }
     }
     if(empty_cache) {
+        LRU_manipulate(sim_cache, 1);
         return COLD_MISS;
     } else {
+        LRU_manipulate(sim_cache, 2);
         return MISS;
     }
+}
 
+/**
+ *
+ * @param sim_cache makes sure that we still have access to the simulated cache
+ * @param set_id the 0-indexed id of the set we are working in
+ * @param tag_id the tag_id of whatever is being hit/missed in the cache
+ * @param z on a cache hit, z is the position in the lines array of the matching line to the tag id
+ * @param result 0 is a cache hit, 1 is a cold miss, 2 is a miss. Dictates which LRU manipulation happens. TODO: split into 3 functions instead of having a result parameter.
+ */
+void LRU_manipulate(cache *sim_cache, int set_id, unsigned long long tag_id, int z, int result) {
+    lru_node *current = sim_cache->lru_tracker[set_id];
+    if (result == 0) {
+        for(int i = 0; i < pow(2, sim_cache->sbits); i++) {
+            if(current->idx = z) {
+                //Move current to front, move front back one
+            } else {
+                //*current = current->next;
+            }
+        }
+    } else if (result == 1) {
 
+    }else if (result == 2) {
+
+    }
 }
 
 void print_usage() {
