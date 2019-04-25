@@ -192,11 +192,13 @@ int main(int argc, char *argv[])
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
     printf("size allocation: %ld\n", sizeof(lru_node *) * simulated_cache->lines_per_set);
-    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * simulated_cache->lines_per_set);
+    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
 
     if(DEBUG) {
          printf("After cache allocation\n");
     }
+
+    printf("RADARE RADARE RADARE RADARE\n");
 
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
@@ -214,6 +216,8 @@ int main(int argc, char *argv[])
             cur_node = cur_node->next;
         }
     }
+
+    printf("Sentry idx of s0l0: %d\n", simulated_cache->lru_tracker[0]->idx);
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
@@ -369,7 +373,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
         //printf("valid: %d\n", lines[i].valid);
 
         if(lines[i].tag == tag_id && lines[i].valid) {
-            printf("Before LRU hit\n");
+            //printf("Before LRU hit\n");
             LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
@@ -378,7 +382,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
         //If ANY validity bit isn't set, our cache is not empty.
         if(!lines[i].valid) {
-            printf("Line %d on set %d is invalid.", i, set_id);
+            //printf("Line %d on set %d is invalid.", i, set_id);
             is_cache_full = false;
         }
     }
@@ -388,14 +392,14 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
         //Perform eviction (overwrite LRU line)
-        prinf("Miss\n");
+        //prinf("Miss\n");
         LRU_miss(sim_cache, set_id, tag_id);
         //prinf("After miss\n");
         return MISS;
     } else {
-        printf("Cold miss\n");
+        //printf("Cold miss\n");
         LRU_cold(sim_cache, set_id, tag_id);
-        printf("After cold miss\n");
+        //printf("After cold miss\n");
         //Find an unused linked list element,
         return COLD_MISS;
     }
@@ -500,12 +504,12 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
             //printf("Before setting front\n");
 
-            //front->next->prev = empty;
+            front->next->prev = empty;
             front->next = empty;
 
             //printf("Before setting prev and next\n");
             //printf("Prev pointer: %p\n", previous->next);
-            //previous->next = nextup;
+            previous->next = nextup;
 
             //printf("Between\n");
 
