@@ -323,7 +323,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
         if(lines[i].tag == tag_id) {
-            LRU_manipulate(sim_cache, set_id, tag_id, i, 0);
+            LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
 
@@ -336,6 +336,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     if(is_cache_full) {
         return MISS;
     } else {
+        LRU_cold(sim_cache, set_id, tag_id);
         return COLD_MISS;
     }
 }
@@ -346,24 +347,58 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
  * @param set_id the 0-indexed id of the set we are working in
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
  * @param z on a cache hit, z is the position in the lines array of the matching line to the tag id
- * @param result 0 is a cache hit, 1 is a cold miss, 2 is a miss. Dictates which LRU manipulation happens. TODO: split into 3 functions instead of having a result parameter.
  */
-void LRU_manipulate(cache *sim_cache, int set_id, unsigned long long tag_id, int z, int result) {
+void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *current = sim_cache->lru_tracker[set_id];
-    if (result == 0) {
-        for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
-            if (current->idx = z) {
-                //Move current to front, move front back one
-            } else {
-                //*current = current->next;
-            }
+    lru_node *front = sim_cache->lru_tracker[set_id];
+    lru_node *hit;
+    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+        if (current->idx = z) {
+            //Move current to front, move front back one
+            lru_node *previous = current->prev;
+            lru_node *nextup = current->next;
+            hit = current;
+            hit->prev = null_ptr;
+            hit->next = front;
+            front->prev = hit;
+            previous->next = nextup;
+            nextup->prev = previous;
+            *current = current->next;
+        } else {
+            *current = current->next;
         }
-    } else if (result == 1) {
-
-    } else if (result == 2) {
-
     }
 }
+
+/**
+ *
+ * @param sim_cache makes sure that we still have access to the simulated cache
+ * @param set_id the 0-indexed id of the set we are working in
+ * @param tag_id the tag_id of whatever is being hit/missed in the cache
+ */
+void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
+    lru_node *current = sim_cache->lru_tracker[set_id];
+    lru_node *front = sim_cache->lru_tracker[set_id];
+    for (int i=0; i< pow(2, sim_cache->sbits); i++) {
+        if(!sim_cache->sets[set_id].lines[current->idx].valid) {
+            lru_node *previous = current->prev;
+            lru_node *nextup = current->next;
+            lru_node *empty = current;
+            empty->prev = null_ptr;
+            empty->next = front;
+            front->prev = empty;
+            previous->next = nextup;
+            nextup->prev = previous;
+            *current = current->next;
+        } else {
+            *current = current->next;
+        }
+    }
+}
+
+
+
+
 /**
  * Sets a cache line's validity bit to 1, based on set id and the tag.
  * @param loc set id and tag, uniquely identifying cache line
