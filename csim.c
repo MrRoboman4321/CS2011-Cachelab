@@ -61,6 +61,19 @@ typedef struct set {
 } set;
 
 /**
+ * Struct for a node in the linked lists managing the LRU eviction policy. Declared before the cache so that it knows
+ * the type lru_node.
+ * @param prev previous node in the LL
+ * @param next subsequent node in the LL
+ * @param idx index into the lines array for the set the linked list is responsible for
+ */
+typedef struct lru_node {
+    struct lru_node *prev;
+    struct lru_node *next;
+    int idx; //Index into the array of lines in the set
+} lru_node;
+
+/**
  * Struct representing the cache to be simulated.
  * @param sets list of sets the cache will simulate (2^s)
  * @param lines_per_set how many lines there are per set (E)
@@ -74,6 +87,7 @@ typedef struct cache {
     int bytes_per_line;
     int sbits;
     int tbits;
+    lru_node **lru_tracker;
 } cache;
 
 //Forward declare of functions requiring cache
@@ -81,18 +95,6 @@ void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_l
 void allocate_cache(cache *sim_cache);
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 int set_cache(location *loc, cache *sim_cache);
-
-/**
- * Struct for a node in the linked lists managing the LRU eviction policy.
- * @param prev previous node in the LL
- * @param next subsequent node in the LL
- * @param idx index into the lines array for the set the linked list is responsible for
- */
-typedef struct lru_node {
-    struct lru_node *prev;
-    struct lru_node *next;
-    int idx; //Index into the array of lines in the set
-} lru_node;
 
 /**
  * Called on startup.
@@ -184,15 +186,13 @@ int main(int argc, char *argv[])
     //Declare then allocate space needed for the cache
     cache *simulated_cache;
     setup_cache(simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
-
-    //Initialize and allocate for the LRU tracker
-    lru_node *lru_tracker[(int) pow(2, s)];
+    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
 
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
         lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
         cur_node->idx = 0;
-        lru_tracker[i] = cur_node;
+        simulated_cache->lru_tracker[i] = cur_node;
 
         for(int j = 0; j < lines_per_set - 1; j++) {
             lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
@@ -204,9 +204,6 @@ int main(int argc, char *argv[])
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
-
-    //TODO: remove, just to ignore "unused variable lru_tracker" on compilation
-    printf("Use LRU tracker: %d", lru_tracker[0]->idx);
 
     location *loc = malloc(sizeof(location));
     loc->set_id = 0;
@@ -340,6 +337,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
         if(lines[i].tag == tag_id) {
+            LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
 
@@ -348,16 +346,74 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
             is_cache_full = false;
         }
     }
-
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
         //Perform eviction (overwrite LRU line)
         return MISS;
     } else {
+        LRU_cold(sim_cache, set_id, tag_id);
         //Find an unused linked list element,
         return COLD_MISS;
     }
 }
+
+/**
+ *
+ * @param sim_cache makes sure that we still have access to the simulated cache
+ * @param set_id the 0-indexed id of the set we are working in
+ * @param tag_id the tag_id of whatever is being hit/missed in the cache
+ * @param z on a cache hit, z is the position in the lines array of the matching line to the tag id
+ */
+void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
+    lru_node *current = sim_cache->lru_tracker[set_id];
+    lru_node *front = sim_cache->lru_tracker[set_id];
+    lru_node *hit;
+    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+        if (current->idx = z) {
+            //Move current to front, move front back one
+            lru_node *previous = current->prev;
+            lru_node *nextup = current->next;
+            hit = current;
+            hit->prev = null_ptr;
+            hit->next = front;
+            front->prev = hit;
+            previous->next = nextup;
+            nextup->prev = previous;
+            *current = current->next;
+        } else {
+            *current = current->next;
+        }
+    }
+}
+
+/**
+ *
+ * @param sim_cache makes sure that we still have access to the simulated cache
+ * @param set_id the 0-indexed id of the set we are working in
+ * @param tag_id the tag_id of whatever is being hit/missed in the cache
+ */
+void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
+    lru_node *current = sim_cache->lru_tracker[set_id];
+    lru_node *front = sim_cache->lru_tracker[set_id];
+    for (int i=0; i< pow(2, sim_cache->sbits); i++) {
+        if(!sim_cache->sets[set_id].lines[current->idx].valid) {
+            lru_node *previous = current->prev;
+            lru_node *nextup = current->next;
+            lru_node *empty = current;
+            empty->prev = null_ptr;
+            empty->next = front;
+            front->prev = empty;
+            previous->next = nextup;
+            nextup->prev = previous;
+            *current = current->next;
+        } else {
+            *current = current->next;
+        }
+    }
+}
+
+
+
 
 /**
  * Sets a cache line's validity bit to 1, based on set id and the tag.
