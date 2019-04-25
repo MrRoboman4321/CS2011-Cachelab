@@ -170,8 +170,6 @@ int main(int argc, char *argv[])
 
     simulated_cache->verbose = verbose_flag;
 
-    printf("RADARE RADARE RADARE RADARE\n");
-
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
         lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
@@ -399,8 +397,6 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
-
-
         if(!sim_cache->sets[set_id].lines[current->idx-1].valid) {
             lru_node *previous = current->prev;
             previous->next = current;
