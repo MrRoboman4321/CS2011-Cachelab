@@ -305,6 +305,7 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
         get_set_and_tag(loc, *address, sim_cache->tbits, sim_cache->sbits);
         switch(*type) {
                 //Modify instruction. Performs a LOAD then a STORE. In our case, does it act the same as Load?
+            case 'S':
             case 'L':
                 //Load instruction. If HIT, increment. If COLD_MISS, pull up new LRU node. If MISS, perform an eviction
                 printf("Load, %x, %d\n", *address, *size);
@@ -317,11 +318,6 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
                         cp->evictions++;
                     };
                 }
-                break;
-            case 'S':
-                //Store instruction. Will not update hits, misses, or evictions, simply updates the validity of the line
-                printf("Store, %x, %d\n", *address, *size);
-                set_cache(loc, sim_cache);
                 break;
             case 'I':
                 //Instruction instruction. Pass.
