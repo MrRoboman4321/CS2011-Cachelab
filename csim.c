@@ -78,6 +78,7 @@ typedef struct lru_node {
  * @param bytes_per_line how many bytes each cache block will store (2^b)
  * @param sbits number of bits for the set id
  * @param tbits number of bits for the tag
+ * @param verbose unused, was used for printing debugging information originally
  */
 typedef struct cache {
     set *sets;
@@ -166,35 +167,39 @@ int main(int argc, char *argv[])
     //Declare then allocate space needed for the cache
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
+
+    //Allocate space for the lru_tracker array, which stored the head sentry nodes of each linked list, corresponding
+    //    to its respective set
     simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
 
+    //Give the verbose flag to the cache to be accessed later
     simulated_cache->verbose = verbose_flag;
 
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
+        //Setup the sentry node at the beginning. Allocate space, nullify its previous, then add it to the lru_tracker
         lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
         cur_node->idx = 0;
         cur_node->prev = NULL;
         simulated_cache->lru_tracker[i] = cur_node;
 
         for(int j = 0; j < lines_per_set + 1; j++) {
+            //Add all of the lru nodes to trail after the head sentry node instantiated outside of the j loop. idx is
+            //    j+1, because the sentry node holds idx 0.
             lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
             next_node->idx = j + 1;
             cur_node->next = next_node;
             next_node->prev = cur_node;
+
+            //If this is the last iteration through the j loop, this change is permanent (not modified by the next
+            //    iteration), so that the final node is a sentry node with a nullified next pointer.
             next_node->next = NULL;
             cur_node = cur_node->next;
         }
     }
 
-    printf("Sentry idx of s0l0: %d\n", simulated_cache->lru_tracker[0]->idx);
-
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
-
-    location *loc = malloc(sizeof(location));
-    loc->set_id = 0;
-    loc->tag_id = 0;
 
     printSummary(cp->hits, cp->misses, cp->evictions);
     return 0;
@@ -209,13 +214,17 @@ int main(int argc, char *argv[])
  * @param tbits
  */
 void setup_cache(cache **sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits) {
+    //Dereference the double pointer to sim_cache, so that we don't have issues with local variable scopes
+    //(see https://stackoverflow.com/questions/3629082/scope-of-malloc-used-in-a-function)
     *sim_cache = (cache *) malloc(sizeof(cache));
 
+    //Pass along all of the command line arguments
     (*sim_cache)->sbits = sbits;
     (*sim_cache)->lines_per_set = lines_per_set;
     (*sim_cache)->bytes_per_line = bytes_per_line;
     (*sim_cache)->tbits = 64 - (sbits + bytes_per_line);
 
+    //Allocate space for the sub-structs of the cache
     allocate_cache(sim_cache);
 }
 
@@ -228,6 +237,7 @@ void allocate_cache(cache **sim_cache) {
         (*sim_cache)->sets[i].lines = (line *) malloc(sizeof(line) * (*sim_cache)->lines_per_set);
         (*sim_cache)->sets[i].id = i;
         for(int j = 0; j < (*sim_cache)->lines_per_set; j++) {
+            //Make sure to initialize validity bits to 0 for each line in each set.
             (*sim_cache)->sets[i].lines[j].valid = 0;
         }
     }
@@ -356,7 +366,6 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
-
         if (current->idx-1 == z) {
             //Move current to front, move front back one
             lru_node *previous = current->prev;
@@ -374,8 +383,6 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
             }
 
             front->next = hit;
-
-            sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             return;
         } else {
             current = current->next;
@@ -449,8 +456,8 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
         current->prev = front;
         front->next = current;
     }
-    sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
 
+    sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
 }
 
 /**
