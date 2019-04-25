@@ -97,6 +97,7 @@ enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 int set_cache(location *loc, cache *sim_cache);
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z);
 void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id);
+void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id);
 
 /**
  * Called on startup.
@@ -500,11 +501,12 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     }
 
     //printf("After for loop\n");
-    
-    printf(current->next);
+
+    //printf(current->next);
     current->prev->next = NULL;
     current->prev = NULL;
     current->next = front;
+}
 
 /**
  * Sets a cache line's validity bit to 1, based on set id and the tag.
@@ -534,81 +536,4 @@ int set_cache(location *loc, cache *sim_cache) {
  */
 void print_usage() {
     printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
-}
-
-void test_allocation();
-
-bool test_load();
-bool test_store();
-bool test_modify();
-bool test_instruction();
-
-bool test_eviction();
-
-/**
- * Runs tests to ensure the program is functional.
- * @return true if tests pass, false (or segfault) if they don't.
- */
-bool run_tests() {
-    test_allocation();
-
-    test_load();
-    test_store();
-    test_modify();
-    test_instruction();
-
-    test_eviction();
-
-    return true;
-}
-
-/**
- * Ensures that all structs were allocated correctly by attempting to write to every available parameter.
- * @return void, as the function will segfault if the write fails.
- */
-void test_allocation() {
-    //Write to all cache params
-    //Write to all sets
-    //Write to all lines
-    //Write to all linked lists
-}
-
-/**
- * Ensures that the cache is correctly updated when a load instruction is called.
- * @return true if it loads correctly
- */
-bool test_load() {
-    return false;
-}
-
-/**
- * Ensures that the cache is correctly updated when a store instruction is called.
- * @return true if it stores correctly
- */
-bool test_store() {
-    return false;
-}
-
-/**
- * Ensures that the cache is correctly updated when a load instruction is called.
- * @return true if it modifies correctly
- */
-bool test_modify() {
-    return false;
-}
-
-/**
- * Ensures that the cache is correctly updated when a load instruction is called.
- * @return true if an instruction line is ignored
- */
-bool test_instruction() {
-    return false;
-}
-
-/**
- * Ensures that the LRU line is evicted when a miss (not cold miss) happens
- * @return true if an eviction is performed correctly
- */
-bool test_eviction() {
-    return false;
 }
