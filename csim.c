@@ -89,6 +89,7 @@ typedef struct cache {
     int bytes_per_line;
     int sbits;
     int tbits;
+    bool verbose;
     lru_node **lru_tracker;
 } cache;
 
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
     }
 
     //If one of the required parameters was not given, so inform user how parameters work then quit
-    if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_path == (char *) NULL) {
+    if(s == -1 || lines_per_set == -1 || bytes_per_line == -1 || trace_path == (char *) NULL || help_flag) {
         print_usage();
         exit(0);
     }
@@ -172,6 +173,8 @@ int main(int argc, char *argv[])
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
     simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
+
+    simulated_cache->verbose = verbose_flag;
 
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
