@@ -434,6 +434,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
             //printf("Before setting front\n");
 
             front->next->prev = hit;
+            front->next = hit;
 
             //printf("Before setting prev and next\n");
             //printf("Prev pointer: %p\n", previous->next);
@@ -491,6 +492,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             printf("Before setting front\n");
 
             front->next->prev = empty;
+            front->next = empty;
 
             printf("Before setting prev and next\n");
             printf("Prev pointer: %p\n", previous->next);
