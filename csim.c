@@ -317,8 +317,9 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
                 cp->hits++;
             case 'S':
             case 'L':
+                ;
                 //Load instruction. If HIT, increment. If COLD_MISS, pull up new LRU node. If MISS, perform an eviction
-                printf("Load, %x, %d\n", *address, *size);
+                //printf("Load, %x, %d\n", *address, *size);
                 int result = cache_scan(loc, sim_cache);
                 if(result == HIT) {
                     cp->hits++;
@@ -331,7 +332,7 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
                 break;
             case 'I':
                 //Instruction instruction. Pass.
-                printf("Instruction (pass)\n");
+                //printf("Instruction (pass)\n");
                 break;
             default:
                 break;
@@ -413,8 +414,8 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
-        printf("i: %d\n", i);
-        printf("current idx-1: %d\n", current->idx-1);
+        //printf("i: %d\n", i);
+        //printf("current idx-1: %d\n", current->idx-1);
 
         if (current->idx-1 == z) {
             //Move current to front, move front back one
@@ -444,7 +445,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
             //printf("Between\n");;
 
             sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
-            printf("Hit on set %d, line %d\n", set_id, current->idx-1);
+            //printf("Hit on set %d, line %d\n", set_id, current->idx-1);
             return;
         } else {
             current = current->next;
@@ -468,7 +469,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     //printf("Before for loop\n");
 
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
-        print("current idx-1: %d\n", current->idx-1);
+        //print("current idx-1: %d\n", current->idx-1);
         //printf("i: %d\n", i);
         //printf("set_id: %d\n", set_id);
 
@@ -495,7 +496,6 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
                 front->next->prev = empty;
                 previous->next = nextup;
                 nextup->prev = previous;
-            } else {
             }
 
             //printf("Before setting front\n");
@@ -512,7 +512,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             //nextup->prev = current;
             sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             sim_cache->sets[set_id].lines[current->idx-1].valid = true;
-            printf("Cold miss on set %d, line %d\n", set_id, current->idx-1);
+            //printf("Cold miss on set %d, line %d\n", set_id, current->idx-1);
             return;
         } else {
             current = current->next;
@@ -527,15 +527,20 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
     //printf("Before for loop\n");
     if(sim_cache->lines_per_set > 1) {
-        for (int i = 0; i < sim_cache->lines_per_set; i++) {
-            //printf("%d\n", i);
+        while(current->next != NULL) {
+            //printf("i: %d\n", i);
             current = current->next;
         }
+
+        current = current->prev;
 
         //printf("After for loop\n");
         //printf(current->next);
 
         current->prev->next = current->next;
+        current->next->prev = current->prev;
+        front->next->prev = current;
+        current->next = front->next;
         current->prev = front;
         front->next = current;
     }
