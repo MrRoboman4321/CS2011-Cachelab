@@ -372,6 +372,9 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
         //Perform eviction (overwrite LRU line)
+        //prinf("Miss\n");
+        LRU_miss(sim_cache, set_id, tag_id);
+        //prinf("After miss\n");
         return MISS;
     } else {
         //printf("Cold miss\n");
@@ -486,8 +489,22 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     }
 }
 
+void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
+    lru_node *current = sim_cache->lru_tracker[set_id];
+    lru_node *front = sim_cache->lru_tracker[set_id];
 
+    //printf("Before for loop\n");
 
+    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+        current = current->next;
+    }
+
+    //printf("After for loop\n");
+    
+    printf(current->next);
+    current->prev->next = NULL;
+    current->prev = NULL;
+    current->next = front;
 
 /**
  * Sets a cache line's validity bit to 1, based on set id and the tag.
