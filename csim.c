@@ -394,30 +394,40 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
  * @param z on a cache hit, z is the position in the lines array of the matching line to the tag id
  */
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
+    //Grabbing the first real node of the linked list and storing it
     lru_node *current = sim_cache->lru_tracker[set_id];
     current = current->next;
+
+    //Grabbing the front sentry node and storing it
     lru_node *front = sim_cache->lru_tracker[set_id];
 
+    //Progressing through the linked list
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
+        //Looking for the node that matches the cache hit
         if (current->idx-1 == z) {
-            //Move current to front, move front back one
+            //Readjusting the linked list to account for LRU
             lru_node *previous = current->prev;
             previous->next = current;
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *hit = current;
-
             hit->prev = front;
+
+            //Readjustments that only happen when the cache hit is beyond the first line
             if(front->next != current) {
                 hit->next = front->next;
                 front->next->prev = hit;
                 previous->next = nextup;
                 nextup->prev = previous;
             }
-
+            //Final reordering of linked list
             front->next = hit;
+
+            //Set the tag in the linked list to the tag_id and exit the function
+            sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             return;
         } else {
+            //Not the cache hit, go to the next node
             current = current->next;
         }
     }
@@ -430,35 +440,41 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
  */
 void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
+    //Grab the first real node of the lru_tracker and store it
     lru_node *current = sim_cache->lru_tracker[set_id];
-
     current = current->next;
 
+    //Grab the front sentry node and store it
     lru_node *front = sim_cache->lru_tracker[set_id];
 
+    //Loop through the lru_tracker linked list
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
+        //Looking for an empty line that can be overwritten and set to valid
         if(!sim_cache->sets[set_id].lines[current->idx-1].valid) {
+            //First round of linked list node readjustment
             lru_node *previous = current->prev;
             previous->next = current;
-
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *empty = current;
-
             empty->prev = front;
+
+            //Node readjustment that only happens when the first line isn't the empty one being created
             if(front->next != current) {
                 empty->next = front->next;
                 front->next->prev = empty;
                 previous->next = nextup;
                 nextup->prev = previous;
             }
-
+            //Last readjustment
             front->next = empty;
 
+            //Set the empty line to the correct tag, set the validity to true, and exit the function
             sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             sim_cache->sets[set_id].lines[current->idx-1].valid = true;
             return;
         } else {
+            //Not an empty line, go to the next node
             current = current->next;
         }
     }
@@ -471,17 +487,25 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
  * @param tag_id passes in the tag id that needs to be added to the simulated cache
  */
 void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
+    //Grab the first important node of the lru_tracker linked list and store it
     lru_node *current = sim_cache->lru_tracker[set_id];
     current = current->next;
+
+    //Grab the front sentry node and store it
     lru_node *front = sim_cache->lru_tracker[set_id];
 
+    //Make sure there is more than one line in the set
     if(sim_cache->lines_per_set > 1) {
+        //If there are multiple lines, there are multiple nodes, so we go to the end of the linked list
+        //The end of the linked list always points to NULL as its next node
         while(current->next != NULL) {
             current = current->next;
         }
-
+        //We are using sentry nodes, so we back up one to get to the last node that is important
+        //Which means the least recently used line, which will be evicted
         current = current->prev;
 
+        //Now we shift the second to last node to right after the front sentry node and make sure the linked list is correctly adjusted
         current->prev->next = current->next;
         current->next->prev = current->prev;
         front->next->prev = current;
@@ -489,8 +513,9 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
         current->prev = front;
         front->next = current;
     }
-
+    //Regardless of whether or not anything happened to the linked list, we overwrite the tag_id to evict the old data, and exit the function
     sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
+    return;
 }
 
 /**
