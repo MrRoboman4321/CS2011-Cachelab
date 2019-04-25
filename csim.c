@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
     loc->set_id = 0;
     loc->tag_id = 0;
 
-    printSummary(0, 0, 0);
+    printSummary(cp->hits, cp->misses, cp->evictions);
     return 0;
 }
 
@@ -348,22 +348,22 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
     //Get the list of lines from the set we want to look at
     line *lines = sim_cache->sets[set_id].lines;
-    printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
+    //printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
 
     bool is_cache_full = true;
 
-    printf("Before cache loop\n");
+    //printf("Before cache loop\n");
 
     //Loop through the lines in the set
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
         if(lines[i].tag == tag_id && lines[i].valid) {
-            prinf("Before LRU hit\n");
+            //printf("Before LRU hit\n");
             LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
 
-        printf("Middle of cache loop\n");
+        //printf("Middle of cache loop\n");
 
         //If ANY validity bit isn't set, our cache is not empty.
         if(!lines[i].valid) {
@@ -371,16 +371,16 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
         }
     }
 
-    printf("After cache loop\n");
+    //printf("After cache loop\n");
 
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
         //Perform eviction (overwrite LRU line)
         return MISS;
     } else {
-        printf("Cold miss\n");
+        //printf("Cold miss\n");
         LRU_cold(sim_cache, set_id, tag_id);
-        printf("After cold miss\n");
+        //printf("After cold miss\n");
         //Find an unused linked list element,
         return COLD_MISS;
     }
@@ -396,7 +396,6 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *current = sim_cache->lru_tracker[set_id];
     lru_node *front = sim_cache->lru_tracker[set_id];
-    lru_node *hit;
 
     if(current->idx == z) {
         return;
@@ -407,27 +406,27 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
         if (current->idx == z) {
             //Move current to front, move front back one
-            printf("Inside of if\n");
+            //printf("Inside of if\n");
             lru_node *previous = current->prev;
             previous->next = current;
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *hit = current;
 
-            printf("Before setting empty\n");
+            //printf("Before setting empty\n");
 
             hit->prev = NULL;
             hit->next = front;
 
-            printf("Before setting front\n");
+            //printf("Before setting front\n");
 
             front->prev = hit;
 
-            printf("Before setting prev and next\n");
-            printf("Prev pointer: %p\n", previous->next);
+            //printf("Before setting prev and next\n");
+            //printf("Prev pointer: %p\n", previous->next);
             previous->next = nextup;
 
-            printf("Between\n");
+            //printf("Between\n");
 
             nextup->prev = current;
 
@@ -455,35 +454,35 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
     current = current->next;
 
-    printf("Before for loop\n");
+    //printf("Before for loop\n");
 
     for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
-        printf("i: %d\n", i);
+        //printf("i: %d\n", i);
         if(!sim_cache->sets[set_id].lines[current->idx].valid) {
-            printf("Inside of if\n");
+            //printf("Inside of if\n");
             lru_node *previous = current->prev;
             previous->next = current;
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *empty = current;
 
-            printf("Before setting empty\n");
+            //printf("Before setting empty\n");
 
             empty->prev = NULL;
             empty->next = front;
 
-            printf("Before setting front\n");
+            //printf("Before setting front\n");
 
             front->prev = empty;
 
-            printf("Before setting prev and next\n");
-            printf("Prev pointer: %p\n", previous->next);
+            //printf("Before setting prev and next\n");
+            //printf("Prev pointer: %p\n", previous->next);
             previous->next = nextup;
 
-            printf("Between\n");
+            //printf("Between\n");
 
             nextup->prev = current;
-            
+
             return;
         } else {
             current = current->next;
