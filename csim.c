@@ -346,7 +346,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 }
 
 /**
- * TODO: Write descripiton
+ * LRU_hit keeps track of LRU logic in the lru_tracker linked list on a cache hit
  * @param sim_cache makes sure that we still have access to the simulated cache
  * @param set_id the 0-indexed id of the set we are working in
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
@@ -386,7 +386,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
 }
 
 /**
- * TODO: Write description
+ * LRU_cold keeps track of LRU logic in the lru_tracker linked list on a cold miss
  * @param sim_cache makes sure that we still have access to the simulated cache
  * @param set_id the 0-indexed id of the set we are working in
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
@@ -428,6 +428,12 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     }
 }
 
+/**
+ * LRU_miss keeps track of LRU logic in the lru_tracker linked list on a cache miss
+ * @param sim_cache makes sure the function has access to the simulated cache
+ * @param set_id passes in the ID of the set where the miss occurs
+ * @param tag_id passes in the tag id that needs to be added to the simulated cache
+ */
 void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
     current = current->next;
