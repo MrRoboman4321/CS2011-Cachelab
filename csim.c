@@ -418,12 +418,12 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
 
             //printf("Before setting empty\n");
 
-            hit->prev = NULL;
-            hit->next = front;
+            hit->prev = front;
+            hit->next = front->next;
 
             //printf("Before setting front\n");
 
-            front->prev = hit;
+            front->next->prev = hit;
 
             //printf("Before setting prev and next\n");
             //printf("Prev pointer: %p\n", previous->next);
@@ -473,12 +473,12 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
             printf("Before setting empty\n");
 
-            empty->prev = NULL;
-            empty->next = front;
+            empty->prev = front;
+            empty->next = front->next;
 
             printf("Before setting front\n");
 
-            front->prev = empty;
+            front->next->prev = empty;
 
             printf("Before setting prev and next\n");
             printf("Prev pointer: %p\n", previous->next);
@@ -511,8 +511,8 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
         //printf(current->next);
 
         current->prev->next = NULL;
-        current->prev = NULL;
-        current->next = front;
+        current->prev = front;
+        current->next = front->next;
     }
     sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
 
