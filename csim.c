@@ -422,21 +422,22 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
             printf("Before setting empty\n");
 
             hit->prev = front;
-            hit->next = front->next;
+            if(front->next != current) {
+                printf("BIG BAD\n");
+                hit->next = front->next;
+                front->next->prev = hit;
+                previous->next = nextup;
+                nextup->prev = previous;
+            }
 
             printf("Before setting front\n");
-
-            front->next->prev = hit;
             front->next = hit;
 
             printf("Before setting prev and next\n");
             printf("Prev pointer: %p\n", previous->next);
-            previous->next = nextup;
+            //printf("Between\n");;
 
-            //printf("Between\n");
-
-            nextup->prev = current;
-            sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
+            sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             return;
         } else {
             current = current->next;
@@ -501,7 +502,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             printf("Between\n");
 
             //nextup->prev = current;
-            sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
+            sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
             sim_cache->sets[set_id].lines[current->idx-1].valid = true;
             return;
         } else {
@@ -525,11 +526,11 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
         //printf("After for loop\n");
         //printf(current->next);
 
-        current->prev->next = NULL;
+        current->prev->next = current->next;
         current->prev = front;
-        current->next = front->next;
+        front->next = current;
     }
-    sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
+    sim_cache->sets[set_id].lines[current->idx-1].tag = tag_id;
 
 }
 
