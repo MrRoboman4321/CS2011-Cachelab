@@ -305,7 +305,8 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
     while(fscanf(trace_file, " %c %x,%d\n", type, address, size) != -1) {
         get_set_and_tag(loc, *address, sim_cache->tbits, sim_cache->sbits);
         switch(*type) {
-                //Modify instruction. Performs a LOAD then a STORE. In our case, does it act the same as Load?
+            case 'M':
+                cp->hits++;
             case 'S':
             case 'L':
                 //Load instruction. If HIT, increment. If COLD_MISS, pull up new LRU node. If MISS, perform an eviction
@@ -349,18 +350,18 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
     bool is_cache_full = true;
 
-    //printf("Before cache loop\n");
+    printf("Before cache loop\n");
 
     //Loop through the lines in the set
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
         if(lines[i].tag == tag_id && lines[i].valid) {
-            //printf("Before LRU hit\n");
+            printf("Before LRU hit\n");
             LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
 
-        //printf("Middle of cache loop\n");
+        printf("Middle of cache loop\n");
 
         //If ANY validity bit isn't set, our cache is not empty.
         if(!lines[i].valid) {
@@ -368,19 +369,19 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
         }
     }
 
-    //printf("After cache loop\n");
+    printf("After cache loop\n");
 
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
         //Perform eviction (overwrite LRU line)
-        //prinf("Miss\n");
+        prinf("Miss\n");
         LRU_miss(sim_cache, set_id, tag_id);
         //prinf("After miss\n");
         return MISS;
     } else {
-        //printf("Cold miss\n");
+        printf("Cold miss\n");
         LRU_cold(sim_cache, set_id, tag_id);
-        //printf("After cold miss\n");
+        printf("After cold miss\n");
         //Find an unused linked list element,
         return COLD_MISS;
     }
@@ -456,32 +457,32 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
     current = current->next;
 
-    //printf("Before for loop\n");
+    printf("Before for loop\n");
 
     for (int i = 1; i < sim_cache->lines_per_set; i++) {
-        //printf("i: %d\n", i);
+        printf("i: %d\n", i);
         if(!sim_cache->sets[set_id].lines[current->idx].valid) {
-            //printf("Inside of if\n");
+            printf("Inside of if\n");
             lru_node *previous = current->prev;
             previous->next = current;
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *empty = current;
 
-            //printf("Before setting empty\n");
+            printf("Before setting empty\n");
 
             empty->prev = NULL;
             empty->next = front;
 
-            //printf("Before setting front\n");
+            printf("Before setting front\n");
 
             front->prev = empty;
 
-            //printf("Before setting prev and next\n");
-            //printf("Prev pointer: %p\n", previous->next);
+            printf("Before setting prev and next\n");
+            printf("Prev pointer: %p\n", previous->next);
             previous->next = nextup;
 
-            //printf("Between\n");
+            printf("Between\n");
 
             nextup->prev = current;
             sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
