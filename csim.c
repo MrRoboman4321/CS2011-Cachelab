@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
     printf("size allocation: %ld\n", sizeof(lru_node *) * simulated_cache->lines_per_set);
-    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * simulated_cache->lines_per_set);
+    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
 
     if(DEBUG) {
          printf("After cache allocation\n");
