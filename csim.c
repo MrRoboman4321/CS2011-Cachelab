@@ -79,6 +79,7 @@ typedef struct cache {
 
 //Forward declare the cache_scan function
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
+int set_cache(location *loc, cache *sim_cache);
 
 /**
  * Struct for a node in the linked lists managing the LRU eviction policy.
@@ -289,6 +290,7 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
             case 'S':
                 //Store instruction. Will not update hits, misses, or evictions, simply updates the validity of the line
                 printf("Store, %x, %d\n", *address, *size);
+                set_cache(loc, sim_cache);
                 break;
             case 'I':
                 //Instruction instruction. Pass.
@@ -298,8 +300,6 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
                 break;
         }
     }
-
-    return cp;
 }
 
 /**
@@ -315,7 +315,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
     //Get the list of lines from the set we want to look at
     line *lines = sim_cache->sets[set_id].lines;
-    printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
+    //printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
 
     bool is_cache_full = true;
 
@@ -334,9 +334,11 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     }
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
+        //Perform eviction (overwrite LRU line)
         return MISS;
     } else {
         LRU_cold(sim_cache, set_id, tag_id);
+        //Find an unused linked list element,
         return COLD_MISS;
     }
 }
@@ -427,4 +429,81 @@ int set_cache(location *loc, cache *sim_cache) {
  */
 void print_usage() {
     printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
+}
+
+void test_allocation();
+
+bool test_load();
+bool test_store();
+bool test_modify();
+bool test_instruction();
+
+bool test_eviction();
+
+/**
+ * Runs tests to ensure the program is functional.
+ * @return true if tests pass, false (or segfault) if they don't.
+ */
+bool run_tests() {
+    test_allocation();
+
+    test_load();
+    test_store();
+    test_modify();
+    test_instruction();
+
+    test_eviction();
+
+    return true;
+}
+
+/**
+ * Ensures that all structs were allocated correctly by attempting to write to every available parameter.
+ * @return void, as the function will segfault if the write fails.
+ */
+void test_allocation() {
+    //Write to all cache params
+    //Write to all sets
+    //Write to all lines
+    //Write to all linked lists
+}
+
+/**
+ * Ensures that the cache is correctly updated when a load instruction is called.
+ * @return true if it loads correctly
+ */
+bool test_load() {
+    return false;
+}
+
+/**
+ * Ensures that the cache is correctly updated when a store instruction is called.
+ * @return true if it stores correctly
+ */
+bool test_store() {
+    return false;
+}
+
+/**
+ * Ensures that the cache is correctly updated when a load instruction is called.
+ * @return true if it modifies correctly
+ */
+bool test_modify() {
+    return false;
+}
+
+/**
+ * Ensures that the cache is correctly updated when a load instruction is called.
+ * @return true if an instruction line is ignored
+ */
+bool test_instruction() {
+    return false;
+}
+
+/**
+ * Ensures that the LRU line is evicted when a miss (not cold miss) happens
+ * @return true if an eviction is performed correctly
+ */
+bool test_eviction() {
+    return false;
 }
