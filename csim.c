@@ -397,18 +397,46 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *current = sim_cache->lru_tracker[set_id];
     lru_node *front = sim_cache->lru_tracker[set_id];
     lru_node *hit;
-    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+
+    if(current->idx == z) {
+        return;
+    }
+
+    current = current->next;
+
+    for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
         if (current->idx == z) {
             //Move current to front, move front back one
+            printf("Inside of if\n");
             lru_node *previous = current->prev;
+            previous->next = current;
             lru_node *nextup = current->next;
-            hit = current;
-            hit->prev = NULL;
-            hit->next = front;
-            front->prev = hit;
+            nextup->prev = current;
+            lru_node *empty = current;
+
+            printf("Before setting empty\n");
+
+            empty->prev = NULL;
+            empty->next = front;
+
+            printf("Before setting front\n");
+
+            front->prev = empty;
+
+            printf("Before setting prev and next\n");
+            printf("Prev pointer: %p\n", previous->next);
             previous->next = nextup;
-            nextup->prev = previous;
+
+            printf("Between\n");
+
+            nextup->prev = current;
+
+            printf("Before setting current\n");
+
             current = current->next;
+
+            printf("After setting current\n");
+            return;
         } else {
             current = current->next;
         }
@@ -425,9 +453,16 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
     lru_node *front = sim_cache->lru_tracker[set_id];
 
+    if(!sim_cache->sets[set_id].lines[current->idx].valid) {
+        sim_cache->sets[set_id].lines[current->idx].valid = true;
+        return;
+    }
+
+    current = current->next;
+
     printf("Before for loop\n");
 
-    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+    for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
         printf("i: %d\n", i);
         if(!sim_cache->sets[set_id].lines[current->idx].valid) {
             printf("Inside of if\n");
@@ -459,6 +494,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             current = current->next;
 
             printf("After setting current\n");
+            return;
         } else {
             current = current->next;
         }
