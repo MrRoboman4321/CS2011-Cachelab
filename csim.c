@@ -76,7 +76,9 @@ typedef struct cache {
     int tbits;
 } cache;
 
-//Forward declare the cache_scan function
+//Forward declare of functions requiring cache
+void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits);
+void allocate_cache(cache *sim_cache);
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 int set_cache(location *loc, cache *sim_cache);
 
@@ -179,6 +181,10 @@ int main(int argc, char *argv[])
         printf("Trace file: %s\n", trace_path);
     }
 
+    //Declare then allocate space needed for the cache
+    cache *simulated_cache;
+    setup_cache(simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
+
     //Initialize and allocate for the LRU tracker
     lru_node *lru_tracker[(int) pow(2, s)];
 
@@ -196,22 +202,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    //Allocate memory to store the cache and sets
-    cache *simulated_cache = (cache *) malloc(sizeof(cache));
-    simulated_cache->sets  = (set *)   malloc(sizeof(set) * pow(2, s));
-
-    //For each set, allocate memory for the lines within
-    for(int i = 0; i < pow(2, s); i++) {
-        simulated_cache->sets[i].lines = (line *) malloc(sizeof(line) * lines_per_set);
-        simulated_cache->sets[i].id = i;
-    }
-
-    //Set the parameters of the cache (to be accessed layers down)
-    simulated_cache->sbits = s;
-    simulated_cache->lines_per_set = lines_per_set;
-    simulated_cache->bytes_per_line = bytes_per_line;
-    simulated_cache->tbits = 64 - (s + bytes_per_line);
-
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
 
@@ -222,10 +212,37 @@ int main(int argc, char *argv[])
     loc->set_id = 0;
     loc->tag_id = 0;
 
-    //get_and_set_tag(loc, 0, 1, 1);
-
     printSummary(0, 0, 0);
     return 0;
+}
+
+/**
+ * Allocates the entire cache, including sets and lines.
+ * @param sim_cache
+ * @param sbits
+ * @param lines_per_set
+ * @param bytes_per_line
+ * @param tbits
+ */
+void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits) {
+    sim_cache->sbits = sbits;
+    sim_cache->lines_per_set = lines_per_set;
+    sim_cache->bytes_per_line = bytes_per_line;
+    sim_cache->tbits = 64 - (sbits + bytes_per_line);
+
+    allocate_cache(sim_cache);
+}
+
+void allocate_cache(cache *sim_cache) {
+    //Allocate memory to store the cache and sets
+    sim_cache = (cache *) malloc(sizeof(cache));
+    sim_cache->sets = (set *) malloc(sizeof(set) * pow(2, sim_cache->sbits));
+
+    //For each set, allocate memory for the lines within
+    for(int i = 0; i < pow(2, sim_cache->sbits); i++) {
+        sim_cache->sets[i].lines = (line *) malloc(sizeof(line) * sim_cache->lines_per_set);
+        sim_cache->sets[i].id = i;
+    }
 }
 
 /**
