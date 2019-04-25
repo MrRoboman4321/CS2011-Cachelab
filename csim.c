@@ -91,8 +91,8 @@ typedef struct cache {
 } cache;
 
 //Forward declare of functions requiring cache
-void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits);
-void allocate_cache(cache *sim_cache);
+void setup_cache(cache **sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits);
+void allocate_cache(cache **sim_cache);
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 int set_cache(location *loc, cache *sim_cache);
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z);
@@ -229,30 +229,29 @@ int main(int argc, char *argv[])
  * @param tbits
  */
 void setup_cache(cache **sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits) {
-    *sim_cache = malloc(sizeof(cache));
+    cache *s_cache = *sim_cache;
+    s_cache = (cache *) malloc(sizeof(cache));
 
-    *sim_cache->sbits = sbits;
-    *sim_cache->lines_per_set = lines_per_set;
-    *sim_cache->bytes_per_line = bytes_per_line;
-    *sim_cache->tbits = 64 - (sbits + bytes_per_line);
+    s_cache->sbits = sbits;
+    s_cache->lines_per_set = lines_per_set;
+    s_cache->bytes_per_line = bytes_per_line;
+    s_cache->tbits = 64 - (sbits + bytes_per_line);
 
     printf("Pre allocate_cache\n");
-    allocate_cache(sim_cache);
+    allocate_cache(&s_cache);
     printf("Post allocate_cache\n");
 }
 
 void allocate_cache(cache **sim_cache) {
-    //Allocate memory to store the cache and sets
-    *sim_cache->sets = (set *) malloc(sizeof(set) * pow(2, sim_cache->sbits));
+    cache *s_cache = *sim_cache;
 
-    printf("Before loop\n");
+    //Allocate memory to store the cache and sets
+    s_cache->sets = (set *) malloc(sizeof(set) * pow(2, s_cache->sbits));
 
     //For each set, allocate memory for the lines within
-    for(int i = 0; i < pow(2, sim_cache->sbits); i++) {
-        printf("%d\n", i);
-        sim_cache->sets[i].lines = (line *) malloc(sizeof(line) * sim_cache->lines_per_set);
-        sim_cache->sets[i].id = i;
-        printf("post alloc (within loop)\n");
+    for(int i = 0; i < pow(2, s_cache->sbits); i++) {
+        s_cache->sets[i].lines = (line *) malloc(sizeof(line) * s_cache->lines_per_set);
+        s_cache->sets[i].id = i;
     }
     printf("Done allocating\n");
 }
