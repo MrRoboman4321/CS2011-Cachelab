@@ -396,6 +396,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
  */
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *current = sim_cache->lru_tracker[set_id];
+    current = current->next;
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     if(current->idx == z) {
@@ -447,6 +448,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
  */
 void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
+    current = current->next;
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     if(!sim_cache->sets[set_id].lines[current->idx].valid) {
@@ -495,6 +497,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
 void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
+    current = current->next;
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     printf("Before for loop\n");
