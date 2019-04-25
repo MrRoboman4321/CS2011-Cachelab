@@ -93,6 +93,8 @@ typedef struct cache {
 //Forward declare of functions requiring cache
 void setup_cache(cache **sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits);
 void allocate_cache(cache **sim_cache);
+void allocate_lru_tracker(cache **sim_cache);
+void free_cache(cache **sim_cache);
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z);
 void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id);
@@ -168,40 +170,19 @@ int main(int argc, char *argv[])
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
 
-    //Allocate space for the lru_tracker array, which stored the head sentry nodes of each linked list, corresponding
-    //    to its respective set
-    simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
-
     //Give the verbose flag to the cache to be accessed later
     simulated_cache->verbose = verbose_flag;
 
-    //Set up linked lists with length E for each set
-    for(int i = 0; i < pow(2, s); i++) {
-        //Setup the sentry node at the beginning. Allocate space, nullify its previous, then add it to the lru_tracker
-        lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
-        cur_node->idx = 0;
-        cur_node->prev = NULL;
-        simulated_cache->lru_tracker[i] = cur_node;
 
-        for(int j = 0; j < lines_per_set + 1; j++) {
-            //Add all of the lru nodes to trail after the head sentry node instantiated outside of the j loop. idx is
-            //    j+1, because the sentry node holds idx 0.
-            lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
-            next_node->idx = j + 1;
-            cur_node->next = next_node;
-            next_node->prev = cur_node;
-
-            //If this is the last iteration through the j loop, this change is permanent (not modified by the next
-            //    iteration), so that the final node is a sentry node with a nullified next pointer.
-            next_node->next = NULL;
-            cur_node = cur_node->next;
-        }
-    }
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
 
     printSummary(cp->hits, cp->misses, cp->evictions);
+
+    free_cache(simulated_cache);
+    free(cp);
+
     return 0;
 }
 
@@ -241,6 +222,56 @@ void allocate_cache(cache **sim_cache) {
             (*sim_cache)->sets[i].lines[j].valid = 0;
         }
     }
+
+    allocate_lru_tracker(sim_cache);
+}
+
+void allocate_lru_tracker(cache **sim_cache) {
+    //Allocate space for the lru_tracker array, which stored the head sentry nodes of each linked list, corresponding
+    //    to its respective set
+    (*sim_cache)->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, (*sim_cache)->sbits));
+
+    //Set up linked lists with length E for each set
+    for(int i = 0; i < pow(2, (*sim_cache)->sbits); i++) {
+        //Setup the sentry node at the beginning. Allocate space, nullify its previous, then add it to the lru_tracker
+        lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
+        cur_node->idx = 0;
+        cur_node->prev = NULL;
+        (*sim_cache)->lru_tracker[i] = cur_node;
+
+        for(int j = 0; j < (*sim_cache)->lines_per_set + 1; j++) {
+            //Add all of the lru nodes to trail after the head sentry node instantiated outside of the j loop. idx is
+            //    j+1, because the sentry node holds idx 0.
+            lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
+            next_node->idx = j + 1;
+            cur_node->next = next_node;
+            next_node->prev = cur_node;
+
+            //If this is the last iteration through the j loop, this change is permanent (not modified by the next
+            //    iteration), so that the final node is a sentry node with a nullified next pointer.
+            next_node->next = NULL;
+            cur_node = cur_node->next;
+        }
+    }
+}
+
+void free_cache(cache **sim_cache) {
+    for(int i = 0; i < pow(2, (*sim_cache)->sbits); i++) {
+        free((*sim_cache)->sets[i].lines);
+    }
+
+    free((*sim_cache)->sets);
+
+    for(int i = 0; i < pow(2, (*sim_cache)->sbits); i++) {
+        lru_node *cur_node = (*sim_cache)->lru_tracker[i];
+        while(cur_node->next != NULL) {
+            cur_node = cur_node->next;
+            free(cur_node->prev);
+        }
+    }
+
+    free((*sim_cache)->lru_tracker);
+    free(*sim_cache);
 }
 
 /**
@@ -311,6 +342,8 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
                 break;
         }
     }
+
+    free(loc);
 }
 
 /**
