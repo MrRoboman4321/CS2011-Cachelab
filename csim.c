@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     //Declare then allocate space needed for the cache
     cache *simulated_cache = NULL;
     setup_cache(&simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
-    printf("size allocation: %f\n", sizeof(lru_node *) * simulated_cache->lines_per_set);
+    printf("size allocation: %ld\n", sizeof(lru_node *) * simulated_cache->lines_per_set);
     simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * simulated_cache->lines_per_set);
 
     if(DEBUG) {
@@ -200,15 +200,25 @@ int main(int argc, char *argv[])
     for(int i = 0; i < pow(2, s); i++) {
         lru_node *cur_node = (lru_node *) malloc(sizeof(lru_node));
         cur_node->idx = 0;
+        cur_node->prev = NULL;
         simulated_cache->lru_tracker[i] = cur_node;
 
         for(int j = 0; j < lines_per_set + 1; j++) {
+            printf("j: %d\n", j);
+            printf("lines per set: %d\n", lines_per_set);
             lru_node *next_node = (lru_node *) malloc(sizeof(lru_node));
             next_node->idx = j + 1;
             cur_node->next = next_node;
             next_node->prev = cur_node;
+            next_node->next = NULL;
+            cur_node = cur_node->next;
         }
     }
+
+    lru_node *front = simulated_cache->lru_tracker[0];
+    printf("start idx: %d\n", front->idx);
+    printf("next idx: %d\n", front->next->idx);
+    printf("final idx: %d\n", front->next->next->idx);
 
     //Run the cache simulation with the trace file input
     simulate_cache(cp, simulated_cache, trace_file);
@@ -255,6 +265,9 @@ void allocate_cache(cache **sim_cache) {
     for(int i = 0; i < pow(2, (*sim_cache)->sbits); i++) {
         (*sim_cache)->sets[i].lines = (line *) malloc(sizeof(line) * (*sim_cache)->lines_per_set);
         (*sim_cache)->sets[i].id = i;
+        for(int j = 0; j < (*sim_cache)->lines_per_set; j++) {
+            (*sim_cache)->sets[i].lines[j].valid = 0;
+        }
     }
 
     printf("Done allocating\n");
@@ -355,6 +368,10 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     //Loop through the lines in the set
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
+
+        printf("tag matches: %d\n", lines[i].tag == tag_id);
+        printf("valid: %d\n", lines[i].valid);
+
         if(lines[i].tag == tag_id && lines[i].valid) {
             printf("Before LRU hit\n");
             LRU_hit(sim_cache, set_id, tag_id, i);
@@ -399,14 +416,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     current = current->next;
     lru_node *front = sim_cache->lru_tracker[set_id];
 
-    if(current->idx == z) {
-        sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
-        return;
-    }
-
-    current = current->next;
-
-    for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
+    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
         if (current->idx == z) {
             //Move current to front, move front back one
             //printf("Inside of if\n");
@@ -448,25 +458,27 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
  */
 void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
+    printf("cur idx: %d\n", current->idx);
     current = current->next;
+    printf("after update: %d\n", current->idx);
     lru_node *front = sim_cache->lru_tracker[set_id];
-
-    if(!sim_cache->sets[set_id].lines[current->idx].valid) {
-        sim_cache->sets[set_id].lines[current->idx].valid = true;
-        sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
-        return;
-    }
-
-    current = current->next;
 
     printf("Before for loop\n");
 
-    for (int i = 1; i < sim_cache->lines_per_set; i++) {
+    for (int i = 0; i < sim_cache->lines_per_set; i++) {
         printf("i: %d\n", i);
+        printf("set_id: %d\n", set_id);
+
+
         if(!sim_cache->sets[set_id].lines[current->idx].valid) {
             printf("Inside of if\n");
+            printf("idx: %d\n", current->idx);
             lru_node *previous = current->prev;
             previous->next = current;
+
+            printf("Before next\n");
+            printf("Next: %p\n", current->next);
+            printf("Front: %p\n", front->prev);
             lru_node *nextup = current->next;
             nextup->prev = current;
             lru_node *empty = current;
@@ -488,6 +500,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
             nextup->prev = current;
             sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
+            sim_cache->sets[set_id].lines[current->idx].valid = true;
             return;
         } else {
             current = current->next;
