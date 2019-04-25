@@ -456,7 +456,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
     //printf("Before for loop\n");
 
-    for (int i = 1; i < pow(2, sim_cache->sbits); i++) {
+    for (int i = 1; i < sim_cache->lines_per_set; i++) {
         //printf("i: %d\n", i);
         if(!sim_cache->sets[set_id].lines[current->idx].valid) {
             //printf("Inside of if\n");
@@ -494,13 +494,14 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *current = sim_cache->lru_tracker[set_id];
     lru_node *front = sim_cache->lru_tracker[set_id];
 
-    //printf("Before for loop\n");
+    printf("Before for loop\n");
 
-    for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
+    for (int i = 0; i < sim_cache->lines_per_set; i++) {
+        printf("%d\n", i);
         current = current->next;
     }
 
-    //printf("After for loop\n");
+    printf("After for loop\n");
 
     //printf(current->next);
     current->prev->next = NULL;
