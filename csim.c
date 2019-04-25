@@ -6,10 +6,6 @@
 #include <getopt.h>
 #include <math.h>
 
-#define DEBUG 1
-#define prinf printf
-#define print printf
-
 /**
  * Struct representing a location of data within the cache
  * @param set_id index of the set
@@ -136,7 +132,6 @@ int main(int argc, char *argv[])
                 verbose_flag = true;
                 break;
             case 's':
-                printf("parsing s...");
                 s = strtol(optarg, &p, 10);
                 break;
             case 'E':
@@ -149,7 +144,6 @@ int main(int argc, char *argv[])
                 trace_path = optarg;
                 break;
             default:
-                printf("other arg passed\n");
                 break;
         }
     }
@@ -327,7 +321,6 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
         //If we have a match, we have a hit. Return.
         if(lines[i].tag == tag_id && lines[i].valid) {
-            printf("Before LRU hit\n");
             LRU_hit(sim_cache, set_id, tag_id, i);
             return HIT;
         }
@@ -340,13 +333,10 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
     //If we don't get a hit and the cache is full, perform an eviction then return. Otherwise, just return.
     if(is_cache_full) {
-        prinf("Miss\n");
         LRU_miss(sim_cache, set_id, tag_id);
         return MISS;
     } else {
-        printf("Cold miss\n");
         LRU_cold(sim_cache, set_id, tag_id);
-        printf("After cold miss\n");
         return COLD_MISS;
     }
 }
@@ -375,7 +365,6 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
 
             hit->prev = front;
             if(front->next != current) {
-                //printf("BIG BAD\n");
                 hit->next = front->next;
                 front->next->prev = hit;
                 previous->next = nextup;
