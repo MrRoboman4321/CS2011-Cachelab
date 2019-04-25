@@ -500,7 +500,7 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     }
 
     //printf("After for loop\n");
-    
+
     printf(current->next);
     current->prev->next = NULL;
     current->prev = NULL;
