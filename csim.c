@@ -315,7 +315,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 
     //Get the list of lines from the set we want to look at
     line *lines = sim_cache->sets[set_id].lines;
-    printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
+    //printf("Lines address: %p\n", lines); //To make sure I know what the fuck is going on (I don't)
 
     bool is_cache_full = true;
 
@@ -394,6 +394,8 @@ bool run_tests() {
     test_instruction();
 
     test_eviction();
+
+    return true;
 }
 
 /**
@@ -412,7 +414,7 @@ void test_allocation() {
  * @return true if it loads correctly
  */
 bool test_load() {
-
+    return false;
 }
 
 /**
@@ -420,7 +422,7 @@ bool test_load() {
  * @return true if it stores correctly
  */
 bool test_store() {
-
+    return false;
 }
 
 /**
@@ -428,7 +430,7 @@ bool test_store() {
  * @return true if it modifies correctly
  */
 bool test_modify() {
-
+    return false;
 }
 
 /**
@@ -436,7 +438,7 @@ bool test_modify() {
  * @return true if an instruction line is ignored
  */
 bool test_instruction() {
-
+    return false;
 }
 
 /**
@@ -444,5 +446,5 @@ bool test_instruction() {
  * @return true if an eviction is performed correctly
  */
 bool test_eviction() {
-
+    return false;
 }
