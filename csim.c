@@ -398,6 +398,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     if(current->idx == z) {
+        sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
         return;
     }
 
@@ -429,7 +430,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
             //printf("Between\n");
 
             nextup->prev = current;
-
+            sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
             return;
         } else {
             current = current->next;
@@ -449,6 +450,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
 
     if(!sim_cache->sets[set_id].lines[current->idx].valid) {
         sim_cache->sets[set_id].lines[current->idx].valid = true;
+        sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
         return;
     }
 
@@ -482,7 +484,7 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             //printf("Between\n");
 
             nextup->prev = current;
-
+            sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
             return;
         } else {
             current = current->next;
@@ -495,18 +497,21 @@ void LRU_miss(cache *sim_cache, int set_id, unsigned long long tag_id) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     printf("Before for loop\n");
+    if(sim_cache->lines_per_set > 1) {
+        for (int i = 0; i < sim_cache->lines_per_set; i++) {
+            printf("%d\n", i);
+            current = current->next;
+        }
 
-    for (int i = 0; i < sim_cache->lines_per_set; i++) {
-        printf("%d\n", i);
-        current = current->next;
+        //printf("After for loop\n");
+        //printf(current->next);
+
+        current->prev->next = NULL;
+        current->prev = NULL;
+        current->next = front;
     }
+    sim_cache->sets[set_id].lines[current->idx].tag = tag_id;
 
-    //printf("After for loop\n");
-    //printf(current->next);
-
-    current->prev->next = NULL;
-    current->prev = NULL;
-    current->next = front;
 }
 
 /**
