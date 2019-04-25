@@ -413,6 +413,7 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *front = sim_cache->lru_tracker[set_id];
 
     for (int i = 0; i < sim_cache->lines_per_set; i++) {
+        printf("i: %d\n", i);
         printf("current idx-1: %d\n", current->idx-1);
 
         if (current->idx-1 == z) {
