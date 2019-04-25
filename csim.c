@@ -95,6 +95,8 @@ void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_l
 void allocate_cache(cache *sim_cache);
 enum HitOrMiss cache_scan(struct location *loc, cache *sim_cache);
 int set_cache(location *loc, cache *sim_cache);
+void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z);
+void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id);
 
 /**
  * Called on startup.
@@ -169,7 +171,7 @@ int main(int argc, char *argv[])
 
     //If the trace file doesn't exist, notify and quit
     if(trace_file == NULL) {
-        printf("Invalid trace file path \"%s\".", trace_path);
+        printf("Invalid trace file path \"%s\".\n", trace_path);
         exit(0);
     }
 
@@ -184,9 +186,14 @@ int main(int argc, char *argv[])
     }
 
     //Declare then allocate space needed for the cache
-    cache *simulated_cache;
+    cache *simulated_cache = NULL;
     setup_cache(simulated_cache, s, lines_per_set, bytes_per_line, 64 - (s + bytes_per_line));
+    printf("size allocation: %f\n", sizeof(lru_node *) * pow(2, simulated_cache->sbits));
     simulated_cache->lru_tracker = (lru_node **) malloc(sizeof(lru_node *) * pow(2, simulated_cache->sbits));
+
+    if(DEBUG) {
+         printf("After cache allocation\n");
+    }
 
     //Set up linked lists with length E for each set
     for(int i = 0; i < pow(2, s); i++) {
@@ -221,25 +228,33 @@ int main(int argc, char *argv[])
  * @param bytes_per_line
  * @param tbits
  */
-void setup_cache(cache *sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits) {
-    sim_cache->sbits = sbits;
-    sim_cache->lines_per_set = lines_per_set;
-    sim_cache->bytes_per_line = bytes_per_line;
-    sim_cache->tbits = 64 - (sbits + bytes_per_line);
+void setup_cache(cache **sim_cache, int sbits, int lines_per_set, int bytes_per_line, int tbits) {
+    *sim_cache = malloc(sizeof(cache));
 
+    *sim_cache->sbits = sbits;
+    *sim_cache->lines_per_set = lines_per_set;
+    *sim_cache->bytes_per_line = bytes_per_line;
+    *sim_cache->tbits = 64 - (sbits + bytes_per_line);
+
+    printf("Pre allocate_cache\n");
     allocate_cache(sim_cache);
+    printf("Post allocate_cache\n");
 }
 
-void allocate_cache(cache *sim_cache) {
+void allocate_cache(cache **sim_cache) {
     //Allocate memory to store the cache and sets
-    sim_cache = (cache *) malloc(sizeof(cache));
-    sim_cache->sets = (set *) malloc(sizeof(set) * pow(2, sim_cache->sbits));
+    *sim_cache->sets = (set *) malloc(sizeof(set) * pow(2, sim_cache->sbits));
+
+    printf("Before loop\n");
 
     //For each set, allocate memory for the lines within
     for(int i = 0; i < pow(2, sim_cache->sbits); i++) {
+        printf("%d\n", i);
         sim_cache->sets[i].lines = (line *) malloc(sizeof(line) * sim_cache->lines_per_set);
         sim_cache->sets[i].id = i;
+        printf("post alloc (within loop)\n");
     }
+    printf("Done allocating\n");
 }
 
 /**
@@ -358,7 +373,7 @@ enum HitOrMiss cache_scan(location *loc, cache *sim_cache) {
 }
 
 /**
- *
+ * TODO: Write descripiton
  * @param sim_cache makes sure that we still have access to the simulated cache
  * @param set_id the 0-indexed id of the set we are working in
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
@@ -369,25 +384,25 @@ void LRU_hit(cache *sim_cache, int set_id, unsigned long long tag_id, int z) {
     lru_node *front = sim_cache->lru_tracker[set_id];
     lru_node *hit;
     for (int i = 0; i < pow(2, sim_cache->sbits); i++) {
-        if (current->idx = z) {
+        if (current->idx == z) {
             //Move current to front, move front back one
             lru_node *previous = current->prev;
             lru_node *nextup = current->next;
             hit = current;
-            hit->prev = null_ptr;
+            hit->prev = NULL;
             hit->next = front;
             front->prev = hit;
             previous->next = nextup;
             nextup->prev = previous;
-            *current = current->next;
+            current = current->next;
         } else {
-            *current = current->next;
+            current = current->next;
         }
     }
 }
 
 /**
- *
+ * TODO: Write description
  * @param sim_cache makes sure that we still have access to the simulated cache
  * @param set_id the 0-indexed id of the set we are working in
  * @param tag_id the tag_id of whatever is being hit/missed in the cache
@@ -400,14 +415,14 @@ void LRU_cold(cache *sim_cache, int set_id, unsigned long long tag_id) {
             lru_node *previous = current->prev;
             lru_node *nextup = current->next;
             lru_node *empty = current;
-            empty->prev = null_ptr;
+            empty->prev = NULL;
             empty->next = front;
             front->prev = empty;
             previous->next = nextup;
             nextup->prev = previous;
-            *current = current->next;
+            current = current->next;
         } else {
-            *current = current->next;
+            current = current->next;
         }
     }
 }
