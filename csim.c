@@ -1,3 +1,10 @@
+/*
+Cachelab -- CS 2011
+4/25/19
+Eli Benevedes - eabenevedes@wpi.edu
+Patrick Eaton - pweaton@wpi.edu
+*/
+
 #include "cachelab.h"
 #include <unistd.h>
 #include <stdbool.h>
@@ -180,7 +187,8 @@ int main(int argc, char *argv[])
 
     printSummary(cp->hits, cp->misses, cp->evictions);
 
-    free_cache(simulated_cache);
+    //Free memory allocated for the cache.
+    free_cache(&simulated_cache);
     free(cp);
 
     return 0;
