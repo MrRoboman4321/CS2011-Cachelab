@@ -25,16 +25,16 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
     if(M == 32 && N == 32) {
         for(int block_row = 0; block_row < 4; block_row++) {
             for(int block_col = 0; block_col < 4; block_col++) {
-                if(block_col >= block_row) {
+//              if(block_col >= block_row) {
                     for (int row = 0; row < 8; row++) {
                         for (int col = 0; col < 8; col++) {
-                            int copy_a = A[8 * block_col + col][8 * block_row + row];
-                            int copy_b = A[8*block_row + row][8*block_col + col];
-                            B[8 * block_row + row][8 * block_col + col] = copy_a;
-                            B[8*block_col + col][8*block_row + row] = copy_b;
+                            int copy_a = A[8 * block_row + row][8 * block_col + col];
+//                          int copy_b = A[8*block_row + row][8*block_col + col];
+                            B[8 * block_col + col][8 * block_row + row] = copy_a;
+//                          B[8*block_col + col][8*block_row + row] = copy_b;
                         }
                     }
-                }
+//              }
             }
         }
     }
