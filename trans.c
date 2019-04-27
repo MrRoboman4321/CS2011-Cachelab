@@ -22,6 +22,23 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
+    if(M == 32 && N == 32) {
+        for(int block_row = 0; block_row < 8; block_row++) {
+            for(int block_col = 0; block_col < 8; block_col++) {
+                for(int row = 0; row < 8; row++) {
+                    for(int col = 0; col < 8; col++) {
+                        B[8*block_col + col][8*block_row + row] = A[8*block_row + row][8*block_col + col];
+                    }
+                }
+            }
+        }
+    }
+
+    if(is_transpose(32, 32, A, B) != 1) {
+        printf("32x32 failed\n");
+    } else {
+        printf("32x32 success\n");
+    }
 }
 
 /* 
