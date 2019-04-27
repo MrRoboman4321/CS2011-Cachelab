@@ -23,8 +23,8 @@ char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     if(M == 32 && N == 32) {
-        for(int block_row = 0; block_row < 8; block_row++) {
-            for(int block_col = 0; block_col < 8; block_col++) {
+        for(int block_row = 0; block_row < 4; block_row++) {
+            for(int block_col = 0; block_col < 4; block_col++) {
                 for(int row = 0; row < 8; row++) {
                     for(int col = 0; col < 8; col++) {
                         B[8*block_col + col][8*block_row + row] = A[8*block_row + row][8*block_col + col];
