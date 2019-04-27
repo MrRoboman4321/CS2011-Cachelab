@@ -351,6 +351,10 @@ void simulate_cache(cache_performance *cp, cache *sim_cache, FILE *trace_file) {
         }
     }
 
+    free(type);
+    free(address);
+    free(size);
+
     free(loc);
 }
 
