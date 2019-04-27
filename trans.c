@@ -38,12 +38,6 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
         }
     }
-
-    if(is_transpose(32, 32, A, B) != 1) {
-        printf("32x32 failed\n");
-    } else {
-        printf("32x32 success\n");
-    }
 }
 
 /* 

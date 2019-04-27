@@ -71,9 +71,9 @@ def main():
     print("")
 
     print("TAGS")
-    for r in range(32):
-        for c in range(32):
-            print("{:d}".format(get_set_and_tag(c*4 + (cols*4)*r, 54, 5)[0]), end = " ")
+    for r in range(rows):
+        for c in range(cols):
+            print("{:2d}".format(get_set_and_tag(c*4 + (cols*4)*r, 54, 5)[0]), end = " ")
             if((c + 1) % 8 == 0):
                 print("  ", end = " ")
         print("")
