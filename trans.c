@@ -37,6 +37,17 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 //              }
             }
         }
+    } else if(M == 64 && N == 64) {
+        for(int block_row = 0; block_row < 8; block_row++) {
+            for (int block_col = 0; block_col < 16; ++block_col) {
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 4; col++) {
+                        int copy_a = A[8 * block_row + row][4 * block_col + col];
+                        B[8 * block_col + col][4 * block_row + row] = copy_a;
+                    }
+                }
+            }
+        }
     }
 }
 
