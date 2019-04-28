@@ -32,7 +32,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
     if(M == 32 && N == 32) {
         //If the array is 32x32, iterate through 8 by 8 blocks in row major order
         for(int block_row = 0; block_row < 4; block_row++) {
-            for(int block_col = 0; block_col < 4; block_col++)
+            for(int block_col = 0; block_col < 4; block_col++) {
                 //Iterate through each of the blocks in row major order
                 for (int row = 0; row < 8; row++) {
                     for (int col = 0; col < 8; col++) {
@@ -45,6 +45,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         }
     } else if(M == 64 && N == 64) {
         //If the array is 64x64, iterate through 4 by 4 blocks in row major order
+        //If we were to loop over 8x8 blocks like we did for the 32x32 matrix, we would run into issues with collisions
+        // due to the set id's wrapping within each of the 8x8 blocks.
         for(int block_row = 0; block_row < 16; block_row++) {
             for (int block_col = 0; block_col < 16; block_col++) {
                 //Iterate through each of the blocks in row major order
