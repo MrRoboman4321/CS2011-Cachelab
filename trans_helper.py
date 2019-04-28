@@ -2,6 +2,13 @@ import sys
 
 def rshift(val, n): return val >> n if val >= 0 else (val + (1 << 64)) >> n
 
+def is_transpose(A, B):
+    for row in range(len(A)):
+        for col in range(len(A[0])):
+            if(A[row][col] != B[col][row]):
+                return False
+    return True
+
 def get_set_and_tag(address, tbits, sbits):
     tag_mask = ~0 << (64 - tbits)
     set_mask = ~0 << (64 - sbits)
@@ -88,6 +95,11 @@ def main():
         print("")
         if((r + 1) % 8 == 0):
             print("")
+
+    if is_transpose(A, B):
+        print("Transpose successful")
+    else:
+        print("Transpose failed")
 
     print("")
     print("")

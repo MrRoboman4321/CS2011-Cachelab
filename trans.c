@@ -1,3 +1,10 @@
+/*
+Cachelab -- CS 2011
+4/28/19
+Eli Benevedes - eabenevedes@wpi.edu
+Patrick Eaton - pweaton@wpi.edu
+*/
+
 /* 
  * trans.c - Matrix transpose B = A^T
  *
@@ -51,28 +58,43 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
         }
     } else {
-        int block_rows = (M - (M % 8))/8;
-        int block_cols = (N - (N % 8))/8;
+        //For an arbitrary length array, we split the array up into blocks again with width 8 (to preserve temporal locality)
+        int block_height = 0;
+
+        if(M % 8 == 0) {
+            block_height = 8;
+        } else if (M % 7 < M % 6 && M % 7 < M % 5 && M % 7 < M % 4) {
+            block_height = 7;
+        } else if (M % 6 < M % 7 && M % 6 < M % 5 && M % 6 < M % 4) {
+            block_height = 6;
+        } else if (M % 5 < M % 7 && M % 5 < M % 6 && M % 5 < M % 4) {
+            block_height = 5;
+        } else {
+            block_height = 4;
+        }
+
+        int block_width = 8;
+        int block_rows = (N - (N % block_height))/block_height;
+        int block_cols = (M - (M % block_width))/block_width;
 
         for(int block_row = 0; block_row < block_rows; block_row++) {
             for(int block_col = 0; block_col < block_cols; block_col++) {
-                for(int row = 0; row < 8; row++) {
-                    for(int col = 0; col < 8; col++) {
-                        int copy_a = A[8*block_row + row][8*block_col + col];
-                        B[8*block_col + col][8*block_row + row] = copy_a;
+                for(int row = 0; row < block_height; row++) {
+                    for(int col = 0; col < block_width; col++) {
+                        B[block_width*block_col + col][block_height*block_row + row] = A[block_height*block_row + row][block_width*block_col + col];
                     }
                 }
             }
         }
 
         for(int row = 0; row < N; row++) {
-            for(int col = block_cols * 8; col < M; col++) {
+            for(int col = block_cols * block_width; col < M; col++) {
                 B[col][row] = A[row][col];
             }
         }
 
-        for(int row = block_rows * 8; row < N; row++) {
-            for(int col = 0; col < block_cols * 8; col++) {
+        for(int row = block_rows * block_height; row < N; row++) {
+            for(int col = 0; col < block_cols * block_width; col++) {
                 B[col][row] = A[row][col];
             }
         }
