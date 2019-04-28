@@ -30,25 +30,27 @@ char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     if(M == 32 && N == 32) {
+        //If the array is 32x32, iterate through 8 by 8 blocks in row major order
         for(int block_row = 0; block_row < 4; block_row++) {
-            for(int block_col = 0; block_col < 4; block_col++) {
-//              if(block_col >= block_row) {
-                    for (int row = 0; row < 8; row++) {
-                        for (int col = 0; col < 8; col++) {
-                            int copy_a = A[8 * block_row + row][8 * block_col + col];
-//                          int copy_b = A[8*block_row + row][8*block_col + col];
-                            B[8 * block_col + col][8 * block_row + row] = copy_a;
-//                          B[8*block_col + col][8*block_row + row] = copy_b;
-                        }
+            for(int block_col = 0; block_col < 4; block_col++)
+                //Iterate through each of the blocks in row major order
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        //Transpose data from array A to array B
+                        int copy_a = A[8 * block_row + row][8 * block_col + col];
+                        B[8 * block_col + col][8 * block_row + row] = copy_a;
                     }
-//              }
+                }
             }
         }
     } else if(M == 64 && N == 64) {
+        //If the array is 64x64, iterate through 4 by 4 blocks in row major order
         for(int block_row = 0; block_row < 16; block_row++) {
             for (int block_col = 0; block_col < 16; block_col++) {
+                //Iterate through each of the blocks in row major order
                 for (int row = 0; row < 4; row++) {
                     for (int col = 0; col < 4; col++) {
+                        //Transpose data from array A to array B
                         int copy_a = A[4 * block_row + row][4 * block_col + col];
                         B[4 * block_col + col][4 * block_row + row] = copy_a;
                     }
