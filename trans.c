@@ -1,8 +1,8 @@
 /*
-Cachelab -- CS 2011
-4/28/19
-Eli Benevedes - eabenevedes@wpi.edu
-Patrick Eaton - pweaton@wpi.edu
+ * Cachelab -- CS 2011
+ * 4/28/19
+ * Eli Benevedes - eabenevedes@wpi.edu
+ * Patrick Eaton - pweaton@wpi.edu
 */
 
 /* 
@@ -56,7 +56,10 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
         }
     } else {
-        //For an arbitrary length array, we split the array up into blocks again with width 8 (to preserve temporal locality)
+        //For an arbitrary length array, we split the array up into blocks again with width 8
+        // (to preserve temporal locality), but with dynamic height. We look to minimize the number of leftover rows
+        // after dividing the array up into chunks, to minimize the amount of extra rows we need to copy over after
+        // block copies.
         int block_height = 0;
 
         if(M % 8 == 0) {
@@ -72,9 +75,12 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         }
 
         int block_width = 8;
+
+        //The block counts are the max number of blocks that can fit within an NxM array.
         int block_rows = (N - (N % block_height))/block_height;
         int block_cols = (M - (M % block_width))/block_width;
 
+        //Do standard block transposes
         for(int block_row = 0; block_row < block_rows; block_row++) {
             for(int block_col = 0; block_col < block_cols; block_col++) {
                 for(int row = 0; row < block_height; row++) {
@@ -85,12 +91,14 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
         }
 
+        //This section transposes the leftover columns to the right of the blocks.
         for(int row = 0; row < N; row++) {
             for(int col = block_cols * block_width; col < M; col++) {
                 B[col][row] = A[row][col];
             }
         }
 
+        //This section transposes the leftover rows below the blocks.
         for(int row = block_rows * block_height; row < N; row++) {
             for(int col = 0; col < block_cols * block_width; col++) {
                 B[col][row] = A[row][col];
